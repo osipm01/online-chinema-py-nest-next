@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # Базовая схема
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Название категории")
+    poster_url: Optional[str] = None  # <-- Добавлено поле
 
 
 # Что нужно для создания категории

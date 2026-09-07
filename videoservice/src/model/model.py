@@ -27,6 +27,7 @@ class Category(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
+    poster_url: Mapped[Optional[str]] = mapped_column(String(500))
 
     # Связь с медиа
     media: Mapped[List["Media"]] = relationship(
@@ -65,6 +66,7 @@ class Season(Base):
 
     # Внешний ключ на Media
     media_id: Mapped[int] = mapped_column(ForeignKey("media.id", ondelete="CASCADE"))
+    poster_url: Mapped[Optional[str]] = mapped_column(String(500))
 
     # Связи
     media: Mapped[Media] = relationship(back_populates="seasons")
@@ -82,6 +84,7 @@ class Episode(Base):
 
     # Опциональный внешний ключ на Season (нужен только если это серия сериала)
     season_id: Mapped[Optional[int]] = mapped_column(ForeignKey("seasons.id", ondelete="CASCADE"))
+    poster_url: Mapped[Optional[str]] = mapped_column(String(500))
 
     # Опциональный внешний ключ на Media (нужен только если это одиночный фильм)
     media_id: Mapped[Optional[int]] = mapped_column(ForeignKey("media.id", ondelete="CASCADE"))

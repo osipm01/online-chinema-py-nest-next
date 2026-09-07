@@ -1,11 +1,8 @@
-# schemas/media.py
-
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, HttpUrl, Field
 from enum import Enum
 
 
-# Дублируем ваш Enum для валидации в Pydantic
 class MediaTypeEnum(str, Enum):
     movie = "movie"
     tv_show = "tv_show"
@@ -18,6 +15,7 @@ class EpisodeBase(BaseModel):
     title: str
     duration: int  # В секундах
     hls_link: str  # Можно использовать HttpUrl, если нужна строгая валидация URL
+    poster_url: Optional[str] = None  # <-- Добавлено поле
 
 
 # Схема для создания
@@ -33,6 +31,7 @@ class EpisodeUpdate(BaseModel):
     hls_link: Optional[str] = None
     season_id: Optional[int] = None
     media_id: Optional[int] = None
+    poster_url: Optional[str] = None  # <-- Добавлено поле
 
 
 # Схема для чтения
@@ -51,6 +50,7 @@ class SeasonBase(BaseModel):
     season_number: int
     title: str
     description: Optional[str] = None
+    poster_url: Optional[str] = None  # <-- Добавлено поле
 
 
 # Схема для создания
@@ -63,6 +63,7 @@ class SeasonUpdate(BaseModel):
     season_number: Optional[int] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    poster_url: Optional[str] = None  # <-- Добавлено поле
 
 
 # Схема для чтения (базовая, без вложенных серий)
@@ -85,6 +86,8 @@ class MediaBase(BaseModel):
     title: str
     description: str
     type: MediaTypeEnum
+    # У Media в самой модели бд нет poster_url, но если вам понадобится 
+    # передавать его транзитом или через гибридные свойства, добавьте сюда.
 
 
 # Схема для создания
@@ -118,6 +121,7 @@ class MediaDetailRead(MediaRead):
 
 class CategoryBase(BaseModel):
     name: str
+    poster_url: Optional[str] = None  # <-- Добавлено поле
 
 
 class CategoryCreate(CategoryBase):
