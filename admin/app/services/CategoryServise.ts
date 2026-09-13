@@ -10,8 +10,8 @@ export class CategoryService {
   private $api: typeof $fetch;
   private baseUrl = 'http://127.0.0.1:8000';
 
-  constructor() {
-    this.$api = $fetch;
+  constructor(api: typeof $fetch) {
+    this.$api = api
   }
 
   /**
@@ -20,7 +20,7 @@ export class CategoryService {
    */
   async create(data: CreateCategoryDto): Promise<Category> {
     return await this.$api<Category>('/api/categories/create', {
-      baseURL: this.baseUrl, // <- Добавляем baseURL сюда
+      baseURL: this.baseUrl, 
       method: 'POST',
       body: data,
     });

@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+
 const categoryApi = useCategory();
 
 // Получаем данные с сервера

@@ -62,13 +62,13 @@ const {
   data: categories, 
   pending: categoriesPending, 
   error: categoriesError 
-} = useFetch<any[]>('http://127.0.0.1:8000/api/categories/')
+} = await useApiFetch<any[]>('http://127.0.0.1:8000/api/categories/')
 
 const { 
   data: recentMedia, 
   pending: mediaPending, 
   error: mediaError 
-} = useFetch<any[]>('http://127.0.0.1:8000/api/media/recent', {
+} = await useApiFetch<any[]>('http://127.0.0.1:8000/api/media/recent', {
   query: { limit: 3 } // передаем стандартный лимит из вашей доки
 })
 </script>

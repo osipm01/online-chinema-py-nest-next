@@ -20,7 +20,7 @@
                     <NuxtLink to="/media/movies" class="nav-link">
                 <span>Фильмы</span>
             </NuxtLink>
-                    <NuxtLink to="/media/tv-shows" class="nav-link">
+                <NuxtLink to="/media/tv-shows" class="nav-link">
                 <span>Сериалы</span>
             </NuxtLink>
         </div>

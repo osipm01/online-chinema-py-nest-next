@@ -1,5 +1,6 @@
 import { CategoryService } from '~/services/CategoryServise';
 
 export const useCategory = () => {
-  return new CategoryService();
+  const { $api } = useNuxtApp()
+  return new CategoryService($api);
 };

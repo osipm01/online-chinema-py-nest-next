@@ -19,6 +19,8 @@ export const useAuth = () => {
         isAuthenticated: true
     }))
 
+    const getAccessToken = () => { return authState.value.user?.accessToken }
+
     const getSessionFromStorage = (): IUser | null => {
         if (process.client) {
             try {
@@ -81,8 +83,6 @@ export const useAuth = () => {
         // saveSessionToStorage(userData)
     }
 
-    // Вызываем инициализацию
-    initializeAuth()
 
     return {
         user: computed(() => authState.value.user),
@@ -93,5 +93,6 @@ export const useAuth = () => {
         getSessionFromStorage,
         initializeAuth, // можно экспортировать если нужно
         setAuthTest,
+        getAccessToken
     }
 }

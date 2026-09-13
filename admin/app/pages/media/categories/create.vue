@@ -2,7 +2,7 @@
   <GlassPanel>
     <!-- Кнопка возврата к списку -->
     <div class="navigation-bar">
-      <NuxtLink to="/media/categories" class="btn-back">← Назад к списку</NuxtLink>
+      <NuxtLink to="/media/categories" class="btn-back">Назад к списку</NuxtLink>
     </div>
 
     <!-- Общая форма-оболочка интерфейса -->
