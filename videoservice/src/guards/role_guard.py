@@ -21,7 +21,6 @@ async def get_current_role(token: str = Depends(oauth2_scheme)) -> str:
         payload = jwt.decode(token, settings.SECRET_JWT_KEY, algorithms=[ALGORITHM])
         role: str = payload.get("role")
 
-        # Если роли внутри токена нет, токен невалиден для этого сервера
         if role is None:
             raise credentials_exception
 
@@ -49,9 +48,3 @@ def role_guard(allowed_roles: List[str]):
 
     return role_dependency
 
-
-# # Пример использования в эндпоинтах
-# @app.get("/secure-data")
-# async def get_secure_data(role: str = Depends(verify_role(["admin", "manager"]))):
-#     # Если выполнение дошло сюда, значит роль точно admin или manager
-#     return {"message": "Доступ разрешен", "your_role": role}

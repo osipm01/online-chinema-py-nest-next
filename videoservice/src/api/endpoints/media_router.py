@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_async_db
 from src.services.media_service import media_service
+from src.guards.role_guard import role_guard
 from src.schemas.media import (
     MediaCreate,
     MediaRead,
@@ -17,9 +18,6 @@ from src.schemas.media import (
     SeasonRead,
     SeasonWithEpisodesRead,
     SeasonUpdate,
-    CategoryCreate,
-    CategoryRead,
-    CategoryWithMediaRead
 )
 
 router = APIRouter(prefix="/media", tags=["Media"])
@@ -30,7 +28,8 @@ router = APIRouter(prefix="/media", tags=["Media"])
 @router.post("/create", response_model=MediaRead, status_code=status.HTTP_201_CREATED)
 async def create_new_media(
     media_in: MediaCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """
     Создание нового медиаресурса (фильма или сериала).
@@ -104,7 +103,8 @@ async def get_media_by_id(
 async def update_media(
     media_id: int,
     media_in: MediaUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Обновление информации о медиаресурсе"""
     return await media_service.update_media(db=db, media_id=media_id, media_in=media_in)
@@ -113,7 +113,8 @@ async def update_media(
 @router.delete("/{media_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media(
     media_id: int,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Удаление медиаресурса"""
     await media_service.delete_media(db=db, media_id=media_id)
@@ -124,7 +125,8 @@ async def delete_media(
 @router.post("/seasons/create", response_model=SeasonRead, status_code=status.HTTP_201_CREATED)
 async def create_season(
     season_in: SeasonCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Создание нового сезона для сериала"""
     return await media_service.create_season(db=db, season_in=season_in)
@@ -152,7 +154,8 @@ async def get_seasons_by_media(
 async def update_season(
     season_id: int,
     season_in: SeasonUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Обновление информации о сезоне"""
     update_data = season_in.model_dump(exclude_unset=True)
@@ -162,7 +165,8 @@ async def update_season(
 @router.delete("/seasons/{season_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_season(
     season_id: int,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Удаление сезона"""
     await media_service.delete_season(db=db, season_id=season_id)
@@ -173,7 +177,8 @@ async def delete_season(
 @router.post("/episodes/create", response_model=EpisodeRead, status_code=status.HTTP_201_CREATED)
 async def create_episode(
     episode_in: EpisodeCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Создание нового эпизода"""
     return await media_service.create_episode(db=db, episode_in=episode_in)
@@ -201,7 +206,8 @@ async def get_episodes_by_season(
 async def update_episode(
     episode_id: int,
     episode_in: EpisodeUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Обновление информации об эпизоде"""
     update_data = episode_in.model_dump(exclude_unset=True)
@@ -211,7 +217,8 @@ async def update_episode(
 @router.delete("/episodes/{episode_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_episode(
     episode_id: int,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Удаление эпизода"""
     await media_service.delete_episode(db=db, episode_id=episode_id)

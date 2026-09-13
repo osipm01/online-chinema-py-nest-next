@@ -3,10 +3,10 @@ from typing import List, Tuple
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Импортируем генератор сессии (клиента)
 from src.core.database import get_async_db
-# Импортируем мозг приложения
 from src.services.category_service import category_service
+from src.guards.role_guard import role_guard
+
 # DTO для валидации
 from src.schemas.category import (
     CategoryCreate,
@@ -28,7 +28,8 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 )
 async def create_new_category(
         category_in: CategoryCreate,
-        db: AsyncSession = Depends(get_async_db)
+        db: AsyncSession = Depends(get_async_db),
+    _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Эндпоинт создания категории"""
     return await category_service.create_category(db=db, category_in=category_in)
@@ -121,7 +122,8 @@ async def get_category_with_media(
 async def update_category(
         category_id: int,
         category_in: CategoryUpdate,
-        db: AsyncSession = Depends(get_async_db)
+        db: AsyncSession = Depends(get_async_db),
+        _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Обновление категории"""
     return await category_service.update_category(
@@ -139,7 +141,8 @@ async def update_category(
 )
 async def delete_category(
         category_id: int,
-        db: AsyncSession = Depends(get_async_db)
+        db: AsyncSession = Depends(get_async_db),
+        _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Удаление категории"""
     await category_service.delete_category(db=db, category_id=category_id)
@@ -154,7 +157,8 @@ async def delete_category(
 async def add_media_to_category(
         category_id: int,
         media_id: int,
-        db: AsyncSession = Depends(get_async_db)
+        db: AsyncSession = Depends(get_async_db),
+        _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Добавление медиа в категорию"""
     await category_service.add_media_to_category(
@@ -174,7 +178,8 @@ async def add_media_to_category(
 async def remove_media_from_category(
         category_id: int,
         media_id: int,
-        db: AsyncSession = Depends(get_async_db)
+        db: AsyncSession = Depends(get_async_db),
+        _: str = Depends(role_guard(["admin", "manager"]))
 ):
     """Удаление медиа из категории"""
     await category_service.remove_media_from_category(
