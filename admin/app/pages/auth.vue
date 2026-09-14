@@ -38,13 +38,8 @@
         console.log('Данные для входа:', loginData)
         console.log("in")
 
-        // 1. Сначала проставляем статус авторизации (чтобы Middleware пустил нас)
-        if (typeof setAuthTest === 'function') {
-            setAuthTest(true) // или передайте ваши loginData, если метод это требует
-        }
+        setAuthTest()
 
-        // 2. Делаем мягкий SPA-переход без external: true
-        // В Nuxt 4 для надежности внутри сабмита формы возвращайте результат
         return await navigateTo('/')
     }
 </script>

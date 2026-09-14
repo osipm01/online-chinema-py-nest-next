@@ -37,6 +37,11 @@
 
 <script setup lang="ts">
 
+definePageMeta({
+  middleware: 'auth',
+  layout: 'default'
+})
+
 const categoryApi = useCategory();
 
 // Получаем данные с сервера

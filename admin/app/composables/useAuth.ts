@@ -16,7 +16,7 @@ interface IAuthState {
 export const useAuth = () => {
     const authState = useState<IAuthState>('auth', () => ({
         user: null,
-        isAuthenticated: true
+        isAuthenticated: false
     }))
 
     const getAccessToken = () => { return authState.value.user?.accessToken }
