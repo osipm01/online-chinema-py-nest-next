@@ -1,118 +1,80 @@
-import type { 
-  Category, 
-  CategoryWithCount, 
-  CategoryWithMedia, 
-  CreateCategoryDto, 
-  UpdateCategoryDto 
-} from '../types/CategoryTypes';
+import type {
+  Category,
+  CategoryWithCount,
+  CategoryWithMedia,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from '../types/CategoryTypes'
+import type { TokenGetter } from './MediaService' // или вынесите в отдельный файл
 
 export class CategoryService {
-  private $api: typeof $fetch;
-  private baseUrl = 'http://127.0.0.1:8000';
+  private $api: typeof $fetch
+  private baseUrl = 'http://127.0.0.1:8001' // 👈 свой микросервис
+  private getToken: TokenGetter
 
-  constructor(api: typeof $fetch) {
+  constructor(api: typeof $fetch, getToken: TokenGetter = () => null) {
     this.$api = api
+    this.getToken = getToken
   }
 
-  /**
-   * POST /api/categories/create
-   * Создать категорию с проверкой уникальности имени
-   */
+  private request<T>(url: string, options: any = {}): Promise<T> {
+    const token = this.getToken()
+    const headers = new Headers(options.headers || {})
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+    return this.$api<T>(url, { baseURL: this.baseUrl, ...options, headers })
+  }
+
   async create(data: CreateCategoryDto): Promise<Category> {
-    return await this.$api<Category>('/api/categories/create', {
-      baseURL: this.baseUrl, 
+    return this.request<Category>('/api/categories/create', {
       method: 'POST',
       body: data,
-    });
+    })
   }
 
-  /**
-   * GET /api/categories/
-   * Получить список всех категорий
-   */
   async getAll(): Promise<Category[]> {
-    return await this.$api<Category[]>('/api/categories/', {
-      baseURL: this.baseUrl // <- И во все остальные методы
-    });
+    return this.request<Category[]>('/api/categories/')
   }
 
-  /**
-   * GET /api/categories/with-count
-   * Получить категории с количеством привязанных медиа
-   */
   async getWithCount(params?: { skip?: number; limit?: number }): Promise<CategoryWithCount[]> {
-    return await this.$api<CategoryWithCount[]>('/api/categories/with-count', {
-      baseURL: this.baseUrl,
+    return this.request<CategoryWithCount[]>('/api/categories/with-count', {
       method: 'GET',
       query: {
         skip: params?.skip ?? 0,
         limit: params?.limit ?? 100,
       },
-    });
+    })
   }
 
-  /**
-   * GET /api/categories/{category_id}
-   * Получить категорию по её ID
-   */
   async getById(categoryId: number): Promise<Category> {
-    return await this.$api<Category>(`/api/categories/${categoryId}`, {
-      baseURL: this.baseUrl
-    });
+    return this.request<Category>(`/api/categories/${categoryId}`)
   }
 
-  /**
-   * PUT /api/categories/{category_id}
-   * Обновить информацию о категории
-   */
   async update(categoryId: number, data: UpdateCategoryDto): Promise<Category> {
-    return await this.$api<Category>(`/api/categories/${categoryId}`, {
-      baseURL: this.baseUrl,
+    return this.request<Category>(`/api/categories/${categoryId}`, {
       method: 'PUT',
       body: data,
-    });
+    })
   }
 
-  /**
-   * DELETE /api/categories/{category_id}
-   * Удалить категорию по ID (Возвращает 204 No Content)
-   */
   async delete(categoryId: number): Promise<void> {
-    await this.$api<void>(`/api/categories/${categoryId}`, {
-      baseURL: this.baseUrl,
-      method: 'DELETE',
-    });
+    await this.request<void>(`/api/categories/${categoryId}`, { method: 'DELETE' })
   }
 
-  /**
-   * GET /api/categories/{category_id}/media
-   * Получить категорию со списком всех привязанных медиа
-   */
   async getMedia(categoryId: number): Promise<CategoryWithMedia> {
-    return await this.$api<CategoryWithMedia>(`/api/categories/${categoryId}/media`, {
-      baseURL: this.baseUrl
-    });
+    return this.request<CategoryWithMedia>(`/api/categories/${categoryId}/media`)
   }
 
-  /**
-   * POST /api/categories/{category_id}/media/{media_id}
-   * Привязать медиа к категории (Many-to-Many)
-   */
   async addMedia(categoryId: number, mediaId: number): Promise<string> {
-    return await this.$api<string>(`/api/categories/${categoryId}/media/${mediaId}`, {
-      baseURL: this.baseUrl,
+    return this.request<string>(`/api/categories/${categoryId}/media/${mediaId}`, {
       method: 'POST',
-    });
+    })
   }
 
-  /**
-   * DELETE /api/categories/{category_id}/media/{media_id}
-   * Отвязать медиа от категории (Many-to-Many)
-   */
   async removeMedia(categoryId: number, mediaId: number): Promise<string> {
-    return await this.$api<string>(`/api/categories/${categoryId}/media/${mediaId}`, {
-      baseURL: this.baseUrl,
+    return this.request<string>(`/api/categories/${categoryId}/media/${mediaId}`, {
       method: 'DELETE',
-    });
+    })
   }
 }

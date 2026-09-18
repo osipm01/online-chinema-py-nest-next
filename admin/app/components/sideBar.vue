@@ -163,39 +163,34 @@
 
 
 <template>
-
-
-    <div class="sidebar">
-        <div class="profile_containner">
-            <span>{{ name }}</span>
-            <span>{{ email }}</span>
-            <span>{{ id }}</span>
-        </div>
-
-        <div class="link_blok">
-            <NuxtLink to="/">главная</NuxtLink>
-            <NuxtLink to="/users">пользователи</NuxtLink>
-            <NuxtLink to="/media">медиа-ресурсы</NuxtLink>
-        </div>
-
-        <button @click="handleLogoutBtn"> logout(выйти) </button>
-
+  <div class="sidebar">
+    <div class="profile_containner">
+      <span>{{ userName }}</span>
+      <span>{{ userRole }}</span>
+      <span>{{ userId }}</span>
     </div>
 
+    <div class="link_blok">
+      <NuxtLink to="/">главная</NuxtLink>
+      <NuxtLink to="/users">пользователи</NuxtLink>
+      <NuxtLink to="/media">медиа-ресурсы</NuxtLink>
+    </div>
+
+    <button @click="handleLogoutBtn">logout(выйти)</button>
+  </div>
 </template>
 
-<script setup lang="ts"> 
+<script setup lang="ts">
+// если добавлял computed в хук — можно так:
+const { logOut, userName, userRole, userId, fetchMe } = useAuth()
 
-    const { logOut } = useAuth()
+// На случай SSR/hard reload — подтянуть актуальные данные с бэка
+onMounted(() => {
+  fetchMe().catch(() => {})
+})
 
-    const handleLogoutBtn = () => {
-        logOut()
-        return navigateTo("/auth")
-    }
-
-    let name = ref("sfe") 
-    let email = ref("sfe") 
-    let id = ref("sfe") 
-    console.log(name, email, id)
-    
+const handleLogoutBtn = async () => {
+  await logOut()
+  return navigateTo('/auth')
+}
 </script>

@@ -1,50 +1,80 @@
 <template>
   <div class="containner_login">
-    <!-- Убедитесь, что handleLogin вызывается асинхронно через .prevent -->
     <form @submit.prevent="handleLogin">
       <h2>Вход</h2>
+
       <input
         v-model="loginData.username"
         type="text"
         placeholder="Введите логин"
+        :disabled="loading"
       />
 
       <input
         v-model="loginData.password"
         type="password"
         placeholder="Введите пароль"
+        :disabled="loading"
       />
-      <button class="login_btn" type="submit">Войти</button>
+
+      <button class="login_btn" type="submit" :disabled="loading">
+        {{ loading ? 'Входим...' : 'Войти' }}
+      </button>
+
+      <p v-if="error" class="error">{{ error }}</p>
     </form>
   </div>
 </template>
 
-<script setup>
-    import { reactive } from 'vue'
+<script setup lang="ts">
+import { reactive, ref } from 'vue'
 
-    definePageMeta({
-        layout: false
-    })
+definePageMeta({
+  layout: false,
+})
 
-    // Берем метод авторизации
-    const { setAuthTest } = useAuth()
+const { login } = useAuth()
 
-    const loginData = reactive({
-        username: '',
-        password: ''
-    })
+const loginData = reactive({
+  username: '',
+  password: '',
+})
 
-    const handleLogin = async () => {
-        console.log('Данные для входа:', loginData)
-        console.log("in")
+const loading = ref(false)
+const error = ref('')
 
-        setAuthTest()
-
-        return await navigateTo('/')
-    }
+const handleLogin = async () => {
+  error.value = ''
+  loading.value = true
+  try {
+    await login(loginData.username, loginData.password)
+    return await navigateTo('/')
+  } catch (e: any) {
+    // DRF возвращает { detail: "..." } для 401, либо объект валидации
+    error.value =
+      e?.data?.detail ||
+      e?.data?.username?.[0] ||
+      e?.data?.password?.[0] ||
+      'Не удалось войти. Проверьте логин и пароль.'
+    console.error('Login error:', e)
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style>
+
+    .error {
+        color: #fff;
+        background: rgba(220, 53, 69, 0.85);
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin: 0;
+        text-align: center;
+    }
+
     /* Центрирующий контейнер */
     .containner_login {
         display: flex;

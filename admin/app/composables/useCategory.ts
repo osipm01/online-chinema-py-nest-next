@@ -2,5 +2,7 @@ import { CategoryService } from '~/services/CategoryServise';
 
 export const useCategory = () => {
   const { $api } = useNuxtApp()
-  return new CategoryService($api);
+  const { getAccessToken } = useAuth()
+
+  return new CategoryService($api, getAccessToken);
 };

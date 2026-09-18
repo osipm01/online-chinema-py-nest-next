@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 import jwt
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 
-from mainservice.core.settings import settings
+from .settings import settings
 
 
 # Роли в бд и payload
