@@ -64,8 +64,7 @@ const handleLogin = async () => {
 </script>
 
 <style>
-
-    .error {
+    .containner_login .error {
         color: #fff;
         background: rgba(220, 53, 69, 0.85);
         padding: 10px 14px;
@@ -103,7 +102,7 @@ const handleLogin = async () => {
     }
 
     /* Красивая стеклянная форма */
-    form {
+    .containner_login form {
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -124,28 +123,31 @@ const handleLogin = async () => {
     }
 
     /* Исправлено: добавили .login_btn вместо login_btn */
-    form h2, input, .login_btn {
+    .containner_login form h2,
+    .containner_login input,
+    .containner_login .login_btn {
         opacity: 0;
         transform: translateX(-30px);
         animation: itemAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     /* Поочередная задержка появления */
-    form h2 {
+    .containner_login form h2 {
         animation-delay: 0.2s;
     }
-    input:nth-of-type(1) {
+    .containner_login input:nth-of-type(1) {
         animation-delay: 0.35s;
     }
-    input:nth-of-type(2) {
+    .containner_login input:nth-of-type(2) {
         animation-delay: 0.5s;
     }
     /* Исправлено: точка для класса */
-    .login_btn {
+    .containner_login .login_btn {
         animation-delay: 0.65s;
     }
 
-    form h2, form .title {
+    .containner_login form h2,
+    .containner_login form .title {
         margin: 0 0 10px 0;
         color: #ffffff;
         font-size: 24px;
@@ -153,7 +155,7 @@ const handleLogin = async () => {
         letter-spacing: 0.5px;
     }
 
-    input {
+    .containner_login input {
         width: 100%;
         padding: 12px 16px;
         background: rgba(255, 255, 255, 0.9);
@@ -166,14 +168,15 @@ const handleLogin = async () => {
         transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
-    input:focus {
+    .containner_login input:focus {
         background: #ffffff;
         border-color: #22C1C3;
         box-shadow: 0 0 0 4px rgba(34, 193, 195, 0.25);
     }
 
     /* Исправлено: точка для класса */
-    .login_btn, input[type="submit"] {
+    .containner_login .login_btn,
+    .containner_login input[type="submit"] {
         width: 100%;
         padding: 14px;
         margin-top: 10px;
@@ -189,7 +192,8 @@ const handleLogin = async () => {
     }
 
     /* Исправлено: точка для класса */
-    .login_btn:hover, input[type="submit"]:hover {
+    .containner_login .login_btn:hover,
+    .containner_login input[type="submit"]:hover {
         background: #22C1C3;
         color: #ffffff;
         transform: translateY(-2px) !important;
@@ -197,11 +201,12 @@ const handleLogin = async () => {
     }
 
     /* Исправлено: точка для класса */
-    .login_btn:active, input[type="submit"]:active {
+    .containner_login .login_btn:active,
+    .containner_login input[type="submit"]:active {
         transform: translateY(0) !important;
     }
 
-    input::placeholder {
+    .containner_login input::placeholder {
         color: #999;
     }
 </style>

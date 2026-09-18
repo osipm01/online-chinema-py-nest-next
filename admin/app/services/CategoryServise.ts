@@ -5,11 +5,11 @@ import type {
   CreateCategoryDto,
   UpdateCategoryDto,
 } from '../types/CategoryTypes'
-import type { TokenGetter } from './MediaService' // или вынесите в отдельный файл
+import type { TokenGetter } from './MediaService'
 
 export class CategoryService {
   private $api: typeof $fetch
-  private baseUrl = 'http://127.0.0.1:8001' // 👈 свой микросервис
+  private baseUrl = 'http://127.0.0.1:8000' 
   private getToken: TokenGetter
 
   constructor(api: typeof $fetch, getToken: TokenGetter = () => null) {

@@ -150,7 +150,7 @@ const handleDelete = async () => {
   try {
     isProcessing.value = true
     await categoryApi.delete(categoryId)
-    router.push('/categories')
+    router.push('/media/categories')
   } catch (err: any) {
     useToastify(`Ошибка ${err.status}`, {
         type: "error",

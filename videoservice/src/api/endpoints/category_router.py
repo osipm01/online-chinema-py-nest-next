@@ -29,7 +29,7 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 async def create_new_category(
         category_in: CategoryCreate,
         db: AsyncSession = Depends(get_async_db),
-    _: str = Depends(role_guard(["admin", "manager"]))
+    _: str = Depends(role_guard(["ADMIN", "manager"]))
 ):
     """Эндпоинт создания категории"""
     return await category_service.create_category(db=db, category_in=category_in)
@@ -123,7 +123,7 @@ async def update_category(
         category_id: int,
         category_in: CategoryUpdate,
         db: AsyncSession = Depends(get_async_db),
-        _: str = Depends(role_guard(["admin", "manager"]))
+        _: str = Depends(role_guard(["ADMIN", "manager"]))
 ):
     """Обновление категории"""
     return await category_service.update_category(
@@ -142,7 +142,7 @@ async def update_category(
 async def delete_category(
         category_id: int,
         db: AsyncSession = Depends(get_async_db),
-        _: str = Depends(role_guard(["admin", "manager"]))
+        _: str = Depends(role_guard(["ADMIN", "manager"]))
 ):
     """Удаление категории"""
     await category_service.delete_category(db=db, category_id=category_id)
@@ -158,7 +158,7 @@ async def add_media_to_category(
         category_id: int,
         media_id: int,
         db: AsyncSession = Depends(get_async_db),
-        _: str = Depends(role_guard(["admin", "manager"]))
+        _: str = Depends(role_guard(["ADMIN", "manager"]))
 ):
     """Добавление медиа в категорию"""
     await category_service.add_media_to_category(
@@ -179,7 +179,7 @@ async def remove_media_from_category(
         category_id: int,
         media_id: int,
         db: AsyncSession = Depends(get_async_db),
-        _: str = Depends(role_guard(["admin", "manager"]))
+        _: str = Depends(role_guard(["ADMIN", "manager"]))
 ):
     """Удаление медиа из категории"""
     await category_service.remove_media_from_category(

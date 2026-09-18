@@ -95,7 +95,7 @@ const handleCreate = async () => {
       })
     
     // Перенаправляем пользователя обратно в список категорий после успеха
-    router.push('/categories')
+    router.push('/media/categories')
   } catch (err: any) {
       useToastify(`Ошибка ${err.status}`, {
         type: "error",

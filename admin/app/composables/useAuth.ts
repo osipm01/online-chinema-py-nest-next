@@ -142,6 +142,7 @@ return {
   userRole: computed(() => authState.value.user?.role ?? ''),
   userId: computed(() => authState.value.user?.id ?? ''),
 
+  // actions
   login,
   register,
   refresh,
@@ -151,6 +152,7 @@ return {
   initializeAuth,
   getAccessToken,
   getRefreshToken,
+  // storage
   saveSessionToStorage,
   getSessionFromStorage,
 }
