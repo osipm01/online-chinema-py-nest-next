@@ -67,3 +67,13 @@ class UpdateUserSerializer(serializers.Serializer):
         choices=[r.name.lower() for r in RolseEnum],
         required=False,
     )
+
+class UpdateUserSerializer(serializers.Serializer):
+    """Редактирование профиля."""
+    username = serializers.CharField(max_length=150, required=False)
+    password = serializers.CharField(write_only=True, min_length=6, required=False)
+    role = serializers.ChoiceField(
+        choices=[r.name.lower() for r in RolseEnum],
+        required=False,
+    )
+    is_active = serializers.BooleanField(required=False)

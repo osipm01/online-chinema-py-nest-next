@@ -153,3 +153,21 @@ class AuthService:
         user.refresh_token = None
         user.save()
         return user
+
+
+    @staticmethod
+    def update_user(user: User, **fields) -> User:
+        if "username" in fields and fields["username"]:
+            user.username = fields["username"]
+            if "role" in fields and fields["role"]:
+                role_enum = AuthService._role_to_enum(fields["role"])
+                user.role = role_enum.name.lower()
+                if "is_active" in fields and fields["is_active"] is not None:
+                    user.is_active = fields["is_active"]
+                    if "password" in fields and fields["password"]:
+                        user.set_password(fields["password"])
+                        # при смене пароля админом — сбрасываем токены пользователя
+                        user.access_token = None
+                        user.refresh_token = None
+                        user.save()
+                        return user

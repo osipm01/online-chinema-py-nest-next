@@ -235,3 +235,67 @@ class UserDetailView(APIView):
             return Response({"detail": "Не найдено"}, status=404)
         AuthService.delete_user(user)
         return Response(status=204)
+
+class UserDetailView(APIView):
+    """
+    GET    /api/users/<id>/   — просмотр (admin или сам пользователь)
+    PUT    /api/users/<id>/   — полное обновление (admin)
+    PATCH  /api/users/<id>/   — частичное обновление (admin)
+    DELETE /api/users/<id>/   — удаление (admin)
+    """
+    permission_classes = [JWTAuthenticated]
+
+    def _get_user(self, pk: int) -> User:
+        user = AuthService.get_user(pk)
+        if not user:
+            raise User.DoesNotExist
+        return user
+
+    def _check_self_or_admin(self, request, user) -> bool:
+        role = request.jwt_payload.get("role")
+        is_admin = role == "ADMIN"
+        is_self = str(user.id) == str(request.jwt_payload.get("sub"))
+        return is_admin or is_self
+
+    def get(self, request, pk: int):
+        try:
+            user = self._get_user(pk)
+        except User.DoesNotExist:
+            return Response({"detail": "Не найдено"}, status=404)
+        if not self._check_self_or_admin(request, user):
+            return Response({"detail": "Нет доступа"}, status=403)
+        return Response(UserSerializer(user).data)
+
+    def put(self, request, pk: int):
+        # PUT семантически = полное обновление; для совместимости с TS
+        # просто делегируем в patch-логику, но можно ужесточить требования.
+        return self._update(request, pk, partial=False)
+
+    def patch(self, request, pk: int):
+        return self._update(request, pk, partial=True)
+
+    def _update(self, request, pk: int, partial: bool):
+        if request.jwt_payload.get("role") != "ADMIN":
+            return Response({"detail": "Только admin"}, status=403)
+        try:
+            user = self._get_user(pk)
+        except User.DoesNotExist:
+            return Response({"detail": "Не найдено"}, status=404)
+
+        serializer = UpdateUserSerializer(data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user = AuthService.update_user(user, **serializer.validated_data)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
+        return Response(UserSerializer(user).data)
+
+    def delete(self, request, pk: int):
+        if request.jwt_payload.get("role") != "ADMIN":
+            return Response({"detail": "Только admin"}, status=403)
+        try:
+            user = self._get_user(pk)
+        except User.DoesNotExist:
+            return Response({"detail": "Не найдено"}, status=404)
+        AuthService.delete_user(user)
+        return Response(status=204)

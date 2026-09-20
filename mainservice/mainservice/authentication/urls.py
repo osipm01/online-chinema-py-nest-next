@@ -11,6 +11,7 @@ from .views import (
 
 app_name = 'authentication'
 
+# authentication/urls.py
 urlpatterns = [
     # auth
     path("auth/register/", RegisterView.as_view()),
@@ -23,6 +24,6 @@ urlpatterns = [
     path("auth/reset-password/confirm/", ResetPasswordConfirmView.as_view()),
 
     # users CRUD
-    path("users/", UserListCreateView.as_view()),
-    path("users/<int:pk>/", UserDetailView.as_view()),
+    path("", UserListCreateView.as_view()),                 # GET/POST /api/users/
+    path("<int:pk>/", UserDetailView.as_view()),            # GET/PUT/PATCH/DELETE /api/users/<pk>/
 ]
