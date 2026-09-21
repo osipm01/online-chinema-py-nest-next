@@ -4,10 +4,6 @@ import { $fetch, type FetchContext } from 'ofetch'
 export default defineNuxtPlugin((nuxtApp) => {
   const { getAccessToken, getRefreshToken, refresh, logOut } = useAuth()
 
-  /**
-   * Single-flight: если несколько запросов одновременно поймали 401,
-   * refresh выполнится только один раз, остальные дождутся результата.
-   */
   let refreshPromise: Promise<string> | null = null
 
   const api = $fetch.create({

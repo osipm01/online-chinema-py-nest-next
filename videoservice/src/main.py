@@ -1,7 +1,6 @@
 # src/main.py
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-# 1. Импортируем CORSMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.api import api_router

@@ -103,14 +103,14 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
 
         # Удаляем старые связи
         await db.execute(
-            text("DELETE FROM media_categories WHERE media_id = :media_id"),
+            text("DELETE FROM media_category WHERE media_id = :media_id"),
             {"media_id": media_id}
         )
 
         # Добавляем новые
         for category_id in category_ids:
             await db.execute(
-                text("INSERT INTO media_categories (media_id, category_id) VALUES (:media_id, :category_id)"),
+                text("INSERT INTO media_category (media_id, category_id) VALUES (:media_id, :category_id)"),
                 {"media_id": media_id, "category_id": category_id}
             )
 
@@ -218,7 +218,7 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
     async def add_media_to_category(self, db: AsyncSession, category_id: int, media_id: int) -> None:
         """Добавить медиа в категорию"""
         await db.execute(
-            text("INSERT INTO media_categories (media_id, category_id) VALUES (:media_id, :category_id)"),
+            text("INSERT INTO media_category (media_id, category_id) VALUES (:media_id, :category_id)"),
             {"media_id": media_id, "category_id": category_id}
         )
         await db.commit()
@@ -226,7 +226,7 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
     async def remove_media_from_category(self, db: AsyncSession, category_id: int, media_id: int) -> None:
         """Удалить медиа из категории"""
         await db.execute(
-            text("DELETE FROM media_categories WHERE media_id = :media_id AND category_id = :category_id"),
+            text("DELETE FROM media_category WHERE media_id = :media_id AND category_id = :category_id"),
             {"media_id": media_id, "category_id": category_id}
         )
         await db.commit()

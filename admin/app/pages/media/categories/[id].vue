@@ -1,5 +1,5 @@
 <template>
-  <GlassPanel>
+  <GalssPanel>
     <!-- Кнопка назад вынесена над формой -->
     <div class="navigation-bar">
       <NuxtLink to="/media/categories" class="btn-back">← Назад</NuxtLink>
@@ -85,7 +85,7 @@
 
       </div>
     </BaseForm>
-  </GlassPanel>
+  </GalssPanel>
 </template>
 
 <script setup lang="ts">

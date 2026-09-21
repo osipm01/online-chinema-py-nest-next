@@ -60,7 +60,7 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
         """Добавить медиа в категорию"""
         await db.execute(
             text(
-                "INSERT INTO media_categories (media_id, category_id) "
+                "INSERT INTO media_category (media_id, category_id) "
                 "VALUES (:media_id, :category_id) "
                 "ON CONFLICT DO NOTHING"  # Игнорируем если связь уже существует
             ),
@@ -77,7 +77,7 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
         """Удалить медиа из категории"""
         await db.execute(
             text(
-                "DELETE FROM media_categories "
+                "DELETE FROM media_category "
                 "WHERE media_id = :media_id AND category_id = :category_id"
             ),
             {"media_id": media_id, "category_id": category_id}
@@ -107,7 +107,7 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
         """Получить все media_id для категории"""
         result = await db.execute(
             text(
-                "SELECT media_id FROM media_categories "
+                "SELECT media_id FROM media_category "
                 "WHERE category_id = :category_id"
             ),
             {"category_id": category_id}
