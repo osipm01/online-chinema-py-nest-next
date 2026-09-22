@@ -1,28 +1,26 @@
 <template>
   <GalssPanel>
     <div class="page-inner">
-      <!-- Кнопка создания пользователя -->
+      <!-- Кнопка создания -->
       <div class="navigation-bar">
-        <NuxtLink to="/users/create" class="btn-back">+ Создать пользователя</NuxtLink>
+        <BaseLink to="/users/create" variant="success">
+          + Создать пользователя
+        </BaseLink>
       </div>
 
-      <!-- Заголовок -->
       <div class="form-header">
         <h1 class="page-title">Пользователи</h1>
       </div>
 
-      <!-- Состояние загрузки -->
       <div v-if="pending" class="loading-state">
         Загрузка списка пользователей...
       </div>
 
-      <!-- Состояние ошибки -->
       <div v-else-if="error" class="error-state">
         Ошибка: {{ error }}
       </div>
 
-      <!-- Список пользователей -->
-      <div v-else-if="users && users.length > 0" class="users-list-container">
+      <div v-else-if="users.length > 0" class="users-list-container">
         <div
           v-for="user in users"
           :key="user.id"
@@ -34,21 +32,25 @@
           </div>
 
           <div class="user-actions-block">
-            <NuxtLink :to="`/users/${user.id}`" class="btn-action btn-primary btn-small">
+            <BaseLink
+              :to="`/users/${user.id}`"
+              variant="primary"
+              size="sm"
+            >
               Редактировать
-            </NuxtLink>
-            <button
-              class="btn-action btn-danger btn-small"
-              :disabled="isProcessing"
+            </BaseLink>
+            <BaseButton
+              variant="danger"
+              size="sm"
+              :loading="isProcessing"
               @click="deleteUser(user.id)"
             >
               Удалить
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>
 
-      <!-- Пустой список -->
       <div v-else class="empty-state-text">
         Список пользователей пуст.
       </div>
@@ -68,7 +70,6 @@ const adminUserService = useAdminUserService()
 const users = ref<IUser[]>([])
 const pending = ref(true)
 const error = ref<string | null>(null)
-const isProcessing = ref(false)
 
 const fetchUsers = async () => {
   pending.value = true
@@ -82,32 +83,26 @@ const fetchUsers = async () => {
   }
 }
 
+const { isProcessing, execute: executeDelete } = useAsyncAction(
+  (id: number) => adminUserService.deleteUser(id),
+  {
+    toast: {
+      successMessage: 'Пользователь удалён',
+      errorMessage: (e: any) => `Ошибка ${e?.status || ''}`,
+    },
+    onSuccess: () => fetchUsers(),
+  }
+)
+
 const deleteUser = async (id: number) => {
   if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) return
-
-  try {
-    isProcessing.value = true
-    await adminUserService.deleteUser(id)
-    await fetchUsers()
-  } catch (e: any) {
-    useToastify(`Ошибка ${e.status || ''}`, {
-      type: "error",
-      autoClose: 3000,
-      theme: "auto"
-    })
-    console.error(e)
-  } finally {
-    isProcessing.value = false
-  }
+  await executeDelete(id).catch(() => {})
 }
 
-onMounted(() => {
-  fetchUsers()
-})
+onMounted(fetchUsers)
 </script>
 
 <style scoped>
-/* Внутренний контейнер: центрирует контент и ограничивает ширину */
 .page-inner {
   display: flex;
   flex-direction: column;
@@ -123,17 +118,6 @@ onMounted(() => {
   justify-content: flex-start;
 }
 
-.btn-back {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.btn-back:hover {
-  color: #ffffff;
-}
-
 .form-header {
   display: flex;
   justify-content: space-between;
@@ -145,30 +129,6 @@ onMounted(() => {
   font-size: 24px;
   font-weight: 600;
   margin: 0;
-}
-
-.loading-state {
-  color: #ffffff;
-  padding: 20px 0;
-  text-align: center;
-}
-
-.error-state {
-  color: #ff6b6b;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  font-size: 14px;
-  text-align: center;
-}
-
-.empty-state-text {
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-  font-size: 14px;
-  text-align: center;
-  padding: 20px 0;
 }
 
 .users-list-container {
@@ -213,51 +173,5 @@ onMounted(() => {
 .user-actions-block {
   display: flex;
   gap: 8px;
-}
-
-.btn-action {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.2s, transform 0.1s, background 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.btn-action:active {
-  transform: scale(0.98);
-}
-
-.btn-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-small {
-  padding: 6px 12px;
-  font-size: 13px;
-}
-
-.btn-primary {
-  background-color: #007a;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #00609a;
-}
-
-.btn-danger {
-  background-color: #e71d36;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c9182d;
 }
 </style>

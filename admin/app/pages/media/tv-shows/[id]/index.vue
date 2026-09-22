@@ -1,7 +1,7 @@
 <template>
   <BaseForm class="user-form-container">
     <div v-if="pending" class="loading-state">
-      Загрузка данных эпизода...
+      Загрузка данных сериала...
     </div>
 
     <div v-else-if="loadError" class="error-state">
@@ -9,40 +9,36 @@
     </div>
 
     <div v-else class="form-content">
-      <div class="form-header">
-        <h3 class="section-title">Эпизод №{{ episodeId }}</h3>
-      </div>
-
       <div class="form-section">
         <BaseInput
           v-model="form.title"
           label="Название"
-          placeholder="Название эпизода"
+          placeholder="Введите название сериала"
           :disabled="isProcessing"
           required
         />
 
-        <BaseInput
-          v-model="form.duration"
-          type="number"
-          label="Длительность (мин)"
-          :min="0"
+        <BaseTextarea
+          v-model="form.description"
+          label="Описание"
+          placeholder="Введите описание"
           :disabled="isProcessing"
+          :rows="5"
+          required
         />
 
-        <BaseInput
-          v-model="form.hls_link"
-          label="HLS ссылка"
-          placeholder="https://..."
-          :disabled="isProcessing"
-        />
-
-        <BaseInput
-          v-model="form.poster_url"
-          label="Poster URL"
-          placeholder="https://..."
-          :disabled="isProcessing"
-        />
+        <BaseFormField label="Категории">
+          <div class="checkbox-grid">
+            <BaseCheckbox
+              v-for="category in categories"
+              :key="category.id"
+              v-model="form.category_ids"
+              :value="category.id"
+              :label="category.name"
+              :disabled="isProcessing"
+            />
+          </div>
+        </BaseFormField>
 
         <div class="action-bar">
           <BaseButton
@@ -53,12 +49,6 @@
           >
             Сохранить изменения
           </BaseButton>
-          <BaseLink
-            :to="`/media/tv-shows/${showId}/seasons/${seasonId}`"
-            variant="secondary"
-          >
-            Отмена
-          </BaseLink>
         </div>
       </div>
 
@@ -71,7 +61,7 @@
           loading-text="Удаление..."
           @click="handleDelete"
         >
-          Удалить эпизод
+          Удалить сериал
         </BaseButton>
       </div>
 
@@ -82,6 +72,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import type { Category } from '~/types/CategoryTypes'
 
 definePageMeta({
   middleware: 'auth',
@@ -91,66 +82,75 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const mediaService = useMedia()
+const categoryService = useCategory()
 
 const showId = Number(route.params.id)
-const seasonId = Number(route.params.seasonId)
-const episodeId = Number(route.params.episodeId)
 
 const form = reactive({
   title: '',
-  duration: 0,
-  hls_link: '',
-  poster_url: ''
+  description: '',
+  category_ids: [] as number[]
 })
 
+const categories = ref<Category[]>([])
 const pending = ref(true)
 const loadError = ref<string | null>(null)
 
 onMounted(async () => {
-  try {
-    const episode = await mediaService.getEpisode(episodeId)
-    form.title = episode.title
-    form.duration = episode.duration
-    form.hls_link = episode.hls_link
-    form.poster_url = episode.poster_url
-  } catch (e: any) {
-    loadError.value = e.message || 'Ошибка загрузки эпизода'
-  } finally {
-    pending.value = false
+  const [catsResult, showResult] = await Promise.allSettled([
+    categoryService.getAll(),
+    mediaService.getById(showId)
+  ])
+
+  if (catsResult.status === 'fulfilled') {
+    categories.value = catsResult.value
+  } else {
+    console.error('Ошибка загрузки категорий:', catsResult.reason)
   }
+
+  if (showResult.status === 'fulfilled') {
+    const show = showResult.value
+    form.title = show.title
+    form.description = show.description
+    form.category_ids = (show.categories || [])
+      .map((c: any) => c?.id)
+      .filter((id: any): id is number => typeof id === 'number')
+  } else {
+    loadError.value = showResult.reason?.message || 'Ошибка загрузки сериала'
+  }
+
+  pending.value = false
 })
 
 const { isProcessing, error, execute: executeUpdate } = useAsyncAction(
-  () => mediaService.updateEpisode(episodeId, {
+  () => mediaService.update(showId, {
     title: form.title,
-    duration: form.duration,
-    hls_link: form.hls_link,
-    poster_url: form.poster_url
+    description: form.description,
+    category_ids: form.category_ids
   }),
   {
     toast: {
-      successMessage: 'Эпизод обновлён',
+      successMessage: 'Сериал обновлён',
       errorMessage: (e) => e?.data?.detail || `Ошибка ${e?.status || ''}`,
     },
-    onSuccess: () => router.push(`/media/tv-shows/${showId}/seasons/${seasonId}`),
   }
 )
 
 const { isProcessing: isDeleting, execute: executeDelete } = useAsyncAction(
-  () => mediaService.deleteEpisode(episodeId),
+  () => mediaService.delete(showId),
   {
     toast: {
-      successMessage: 'Эпизод удалён',
+      successMessage: 'Сериал удалён',
       errorMessage: (e) => `Ошибка ${e?.status || ''}`,
     },
-    onSuccess: () => router.push(`/media/tv-shows/${showId}/seasons/${seasonId}`),
+    onSuccess: () => router.push('/media/tv-shows'),
   }
 )
 
 const handleUpdate = () => executeUpdate().catch(() => {})
 
 const handleDelete = async () => {
-  if (!confirm('Удалить этот эпизод?')) return
+  if (!confirm('Вы уверены, что хотите удалить этот сериал?')) return
   await executeDelete().catch(() => {})
 }
 </script>
@@ -160,19 +160,6 @@ const handleDelete = async () => {
   display: flex;
   flex-direction: column;
   gap: 24px;
-}
-
-.form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section-title {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
 }
 
 .form-section {
@@ -186,6 +173,7 @@ const handleDelete = async () => {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .form-divider {

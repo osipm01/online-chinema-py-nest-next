@@ -1,93 +1,66 @@
 <template>
-  <GalssPanel>
-    <div class="navigation-bar">
-      <NuxtLink
-        :to="`/media/tv-shows/${showId}/seasons/${seasonId}`"
-        class="btn-back"
-      >
-        ← Назад к сезону
-      </NuxtLink>
-    </div>
-
-    <BaseForm class="user-form-container">
-      <div class="form-content">
-        <div class="form-header">
-          <h1 class="page-title">Новый эпизод</h1>
-        </div>
-
-        <form @submit.prevent="handleCreate" class="form-section">
-          <div class="input-field-group">
-            <label for="title" class="field-label">Название</label>
-            <input
-              id="title"
-              v-model="form.title"
-              type="text"
-              required
-              class="custom-input"
-              placeholder="Название эпизода"
-              :disabled="isProcessing"
-            />
-          </div>
-
-          <div class="input-field-group">
-            <label for="duration" class="field-label">Длительность (мин)</label>
-            <input
-              id="duration"
-              v-model.number="form.duration"
-              type="number"
-              min="0"
-              class="custom-input"
-              :disabled="isProcessing"
-            />
-          </div>
-
-          <div class="input-field-group">
-            <label for="hls_link" class="field-label">HLS ссылка</label>
-            <input
-              id="hls_link"
-              v-model="form.hls_link"
-              type="text"
-              class="custom-input"
-              placeholder="https://..."
-              :disabled="isProcessing"
-            />
-          </div>
-
-          <div class="input-field-group">
-            <label for="poster_url" class="field-label">Poster URL</label>
-            <input
-              id="poster_url"
-              v-model="form.poster_url"
-              type="text"
-              class="custom-input"
-              placeholder="https://..."
-              :disabled="isProcessing"
-            />
-          </div>
-
-          <div class="action-bar">
-            <button type="submit" class="btn-action btn-success" :disabled="isProcessing">
-              {{ isProcessing ? 'Создание...' : 'Создать эпизод' }}
-            </button>
-            <NuxtLink
-              :to="`/media/tv-shows/${showId}/seasons/${seasonId}`"
-              class="btn-action btn-secondary"
-            >
-              Отмена
-            </NuxtLink>
-          </div>
-        </form>
-
-        <div v-if="errorMessage" class="error-state">
-          {{ errorMessage }}
-        </div>
+  <BaseForm class="user-form-container">
+    <div class="form-content">
+      <div class="form-header">
+        <h3 class="section-title">Новый эпизод</h3>
       </div>
-    </BaseForm>
-  </GalssPanel>
+
+      <form @submit.prevent="handleSubmit" class="form-section">
+        <BaseInput
+          v-model="form.title"
+          label="Название"
+          placeholder="Название эпизода"
+          :disabled="isProcessing"
+          required
+        />
+
+        <BaseInput
+          v-model="form.duration"
+          type="number"
+          label="Длительность (мин)"
+          :min="0"
+          :disabled="isProcessing"
+        />
+
+        <BaseInput
+          v-model="form.hls_link"
+          label="HLS ссылка"
+          placeholder="https://..."
+          :disabled="isProcessing"
+        />
+
+        <BaseInput
+          v-model="form.poster_url"
+          label="Poster URL"
+          placeholder="https://..."
+          :disabled="isProcessing"
+        />
+
+        <div class="action-bar">
+          <BaseButton
+            native-type="submit"
+            variant="success"
+            :loading="isProcessing"
+            loading-text="Создание..."
+          >
+            Создать эпизод
+          </BaseButton>
+          <BaseLink
+            :to="`/media/tv-shows/${showId}/seasons/${seasonId}`"
+            variant="secondary"
+          >
+            Отмена
+          </BaseLink>
+        </div>
+      </form>
+
+      <div v-if="error" class="error-state">{{ error }}</div>
+    </div>
+  </BaseForm>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { reactive } from 'vue'
 
 definePageMeta({
   middleware: 'auth',
@@ -101,9 +74,6 @@ const mediaService = useMedia()
 const showId = Number(route.params.id)
 const seasonId = Number(route.params.seasonId)
 
-const isProcessing = ref(false)
-const errorMessage = ref<string | null>(null)
-
 const form = reactive({
   title: '',
   duration: 0,
@@ -111,57 +81,28 @@ const form = reactive({
   poster_url: ''
 })
 
-const handleCreate = async () => {
-  try {
-    isProcessing.value = true
-    errorMessage.value = null
-
-    await mediaService.createEpisode({
-      title: form.title,
-      duration: form.duration,
-      hls_link: form.hls_link,
-      poster_url: form.poster_url,
-      season_id: seasonId,
-      media_id: showId
-    })
-
-    useToastify('Эпизод создан', {
-      type: 'success',
-      autoClose: 3000,
-      theme: 'auto'
-    })
-
-    router.push(`/media/tv-shows/${showId}/seasons/${seasonId}`)
-  } catch (err: any) {
-    errorMessage.value = err.message || 'Ошибка при создании'
-    useToastify(`Ошибка ${err.status || ''}`, {
-      type: 'error',
-      autoClose: 3000,
-      theme: 'auto'
-    })
-    console.error(err)
-  } finally {
-    isProcessing.value = false
+const { isProcessing, error, execute } = useAsyncAction(
+  () => mediaService.createEpisode({
+    title: form.title,
+    duration: form.duration,
+    hls_link: form.hls_link,
+    poster_url: form.poster_url,
+    season_id: seasonId,
+    media_id: showId
+  }),
+  {
+    toast: {
+      successMessage: 'Эпизод создан',
+      errorMessage: (e) => e?.data?.detail || `Ошибка ${e?.status || ''}`,
+    },
+    onSuccess: () => router.push(`/media/tv-shows/${showId}/seasons/${seasonId}`),
   }
-}
+)
+
+const handleSubmit = () => execute().catch(() => {})
 </script>
 
 <style scoped>
-.navigation-bar {
-  margin-bottom: 16px;
-}
-
-.btn-back {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.btn-back:hover {
-  color: #ffffff;
-}
-
 .form-content {
   display: flex;
   flex-direction: column;
@@ -174,9 +115,9 @@ const handleCreate = async () => {
   align-items: center;
 }
 
-.page-title {
+.section-title {
   color: #ffffff;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 600;
   margin: 0;
 }
@@ -187,87 +128,10 @@ const handleCreate = async () => {
   gap: 20px;
 }
 
-.input-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.field-label {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
-.custom-input {
-  width: 100%;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #333333;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.custom-input:disabled {
-  background: rgba(255, 255, 255, 0.5);
-  cursor: not-allowed;
-}
-
 .action-bar {
   margin-top: 8px;
   display: flex;
   gap: 12px;
   align-items: center;
-}
-
-.btn-action {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.2s, transform 0.1s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.btn-action:active {
-  transform: scale(0.98);
-}
-
-.btn-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-success {
-  background-color: #2ec4b6;
-  color: white;
-  width: max-content;
-}
-
-.btn-secondary {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-.error-state {
-  color: #ff6b6b;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  font-size: 14px;
-  text-align: center;
 }
 </style>

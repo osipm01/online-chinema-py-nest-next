@@ -1,4 +1,5 @@
 <template>
+  <NuxtPage />
   <GalssPanel>
     <!-- Кнопка назад вынесена над формой -->
     <div class="navigation-bar">

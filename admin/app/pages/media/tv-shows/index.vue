@@ -2,7 +2,9 @@
   <GalssPanel>
     <div class="page-inner">
       <div class="navigation-bar">
-        <NuxtLink to="/media/tv-shows/create" class="btn-back">+ Создать сериал</NuxtLink>
+        <BaseLink to="/media/tv-shows/create" variant="success">
+          + Создать сериал
+        </BaseLink>
       </div>
 
       <div class="form-header">
@@ -10,53 +12,46 @@
       </div>
 
       <div class="filters-bar">
-        <div class="input-field-group filters-field">
-          <label class="field-label" for="search">Поиск</label>
-          <input
-            id="search"
-            v-model="searchQuery"
-            type="text"
-            class="custom-input"
-            placeholder="Название сериала"
-            @keyup.enter="applyFilters"
-          />
-        </div>
+        <BaseInput
+          v-model="searchQuery"
+          label="Поиск"
+          placeholder="Название сериала"
+          class="filters-field"
+          @enter="applyFilters"
+        />
 
-        <div class="input-field-group filters-field">
-          <label class="field-label" for="category">Категория</label>
-          <select
-            id="category"
-            v-model="selectedCategoryId"
-            class="custom-input custom-select"
+        <BaseSelect
+          v-model="selectedCategoryId"
+          label="Категория"
+          class="filters-field"
+        >
+          <option :value="null">Все категории</option>
+          <option
+            v-for="category in categories"
+            :key="category.id"
+            :value="category.id"
           >
-            <option :value="null">Все категории</option>
-            <option
-              v-for="category in categories"
-              :key="category.id"
-              :value="category.id"
-            >
-              {{ category.name }}
-            </option>
-          </select>
-        </div>
+            {{ category.name }}
+          </option>
+        </BaseSelect>
 
         <div class="filters-actions">
-          <button
-            type="button"
-            class="btn-action btn-success btn-small"
+          <BaseButton
+            variant="success"
+            size="sm"
             :disabled="pending"
             @click="applyFilters"
           >
             Применить
-          </button>
-          <button
-            type="button"
-            class="btn-action btn-secondary btn-small"
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            size="sm"
             :disabled="pending"
             @click="resetFilters"
           >
             Сбросить
-          </button>
+          </BaseButton>
         </div>
       </div>
 
@@ -68,7 +63,7 @@
         Ошибка: {{ error }}
       </div>
 
-      <div v-else-if="tvShows && tvShows.length > 0" class="users-list-container">
+      <div v-else-if="tvShows.length > 0" class="users-list-container">
         <div
           v-for="show in tvShows"
           :key="show.id"
@@ -80,22 +75,28 @@
           </div>
 
           <div class="user-actions-block">
-            <NuxtLink :to="`/media/tv-shows/${show.id}`" class="btn-action btn-primary btn-small">
+            <BaseLink
+              :to="`/media/tv-shows/${show.id}`"
+              variant="primary"
+              size="sm"
+            >
               Редактировать
-            </NuxtLink>
-            <NuxtLink
-              :to="`/media//tv-shows/${show.id}/seasons`"
-              class="btn-action btn-secondary btn-small"
+            </BaseLink>
+            <BaseLink
+              :to="`/media/tv-shows/${show.id}/seasons`"
+              variant="secondary"
+              size="sm"
             >
               Сезоны
-            </NuxtLink>
-            <button
-              class="btn-action btn-danger btn-small"
-              :disabled="isProcessing"
+            </BaseLink>
+            <BaseButton
+              variant="danger"
+              size="sm"
+              :loading="isProcessing"
               @click="deleteShow(show.id)"
             >
               Удалить
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -123,7 +124,6 @@ const tvShows = ref<Media[]>([])
 const categories = ref<Category[]>([])
 const pending = ref(true)
 const error = ref<string | null>(null)
-const isProcessing = ref(false)
 
 const searchQuery = ref('')
 const selectedCategoryId = ref<number | null>(null)
@@ -156,9 +156,7 @@ const fetchCategories = async () => {
   }
 }
 
-const applyFilters = () => {
-  fetchTvShows()
-}
+const applyFilters = () => fetchTvShows()
 
 const resetFilters = () => {
   searchQuery.value = ''
@@ -166,23 +164,20 @@ const resetFilters = () => {
   fetchTvShows()
 }
 
+const { isProcessing, execute: executeDelete } = useAsyncAction(
+  (id: number) => mediaService.delete(id),
+  {
+    toast: {
+      successMessage: 'Сериал удалён',
+      errorMessage: (e) => `Ошибка ${e?.status || ''}`,
+    },
+    onSuccess: () => fetchTvShows(),
+  }
+)
+
 const deleteShow = async (id: number) => {
   if (!confirm('Вы уверены, что хотите удалить этот сериал?')) return
-
-  try {
-    isProcessing.value = true
-    await mediaService.delete(id)
-    await fetchTvShows()
-  } catch (e: any) {
-    useToastify(`Ошибка ${e.status || ''}`, {
-      type: 'error',
-      autoClose: 3000,
-      theme: 'auto'
-    })
-    console.error(e)
-  } finally {
-    isProcessing.value = false
-  }
+  await executeDelete(id).catch(() => {})
 }
 
 onMounted(() => {
@@ -205,17 +200,6 @@ onMounted(() => {
 .navigation-bar {
   display: flex;
   justify-content: flex-start;
-}
-
-.btn-back {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.btn-back:hover {
-  color: #ffffff;
 }
 
 .form-header {
@@ -246,30 +230,6 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-.loading-state {
-  color: #ffffff;
-  padding: 20px 0;
-  text-align: center;
-}
-
-.error-state {
-  color: #ff6b6b;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  font-size: 14px;
-  text-align: center;
-}
-
-.empty-state-text {
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-  font-size: 14px;
-  text-align: center;
-  padding: 20px 0;
 }
 
 .users-list-container {
@@ -314,100 +274,5 @@ onMounted(() => {
 .user-actions-block {
   display: flex;
   gap: 8px;
-}
-
-.input-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.field-label {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
-.custom-input {
-  width: 100%;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #333333;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.custom-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 38px;
-  cursor: pointer;
-}
-
-.btn-action {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.2s, transform 0.1s, background 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.btn-action:active {
-  transform: scale(0.98);
-}
-
-.btn-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-small {
-  padding: 6px 12px;
-  font-size: 13px;
-}
-
-.btn-primary {
-  background-color: #007a;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #00609a;
-}
-
-.btn-danger {
-  background-color: #e71d36;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c9182d;
-}
-
-.btn-success {
-  background-color: #2ec4b6;
-  color: white;
-}
-
-.btn-secondary {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.25);
 }
 </style>

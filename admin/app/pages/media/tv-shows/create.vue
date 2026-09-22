@@ -1,8 +1,6 @@
 <template>
   <GalssPanel>
-    <div class="navigation-bar">
-      <NuxtLink to="/media/tv-shows" class="btn-back">← Назад к списку</NuxtLink>
-    </div>
+    <BaseBackLink to="/media/tv-shows" label="← Назад к списку" />
 
     <BaseForm class="user-form-container">
       <div class="form-content">
@@ -10,65 +8,48 @@
           <h1 class="page-title">Создание нового сериала</h1>
         </div>
 
-        <form @submit.prevent="handleCreate" class="form-section">
-          <!-- Данные сериала -->
-          <div class="input-field-group">
-            <label for="title" class="field-label">Название сериала</label>
-            <input
-              id="title"
-              v-model="createForm.title"
-              type="text"
-              required
-              class="custom-input"
-              placeholder="Введите название сериала"
-              :disabled="isProcessing"
-            />
-          </div>
+        <form @submit.prevent="handleSubmit" class="form-section">
+          <BaseInput
+            v-model="createForm.title"
+            label="Название сериала"
+            placeholder="Введите название сериала"
+            :disabled="isProcessing"
+            required
+          />
 
-          <div class="input-field-group">
-            <label for="description" class="field-label">Описание</label>
-            <textarea
-              id="description"
-              v-model="createForm.description"
-              required
-              class="custom-input custom-textarea"
-              placeholder="Введите описание"
-              :disabled="isProcessing"
-            ></textarea>
-          </div>
+          <BaseTextarea
+            v-model="createForm.description"
+            label="Описание"
+            placeholder="Введите описание"
+            :disabled="isProcessing"
+            :rows="4"
+            required
+          />
 
-          <div class="input-field-group">
-            <label class="field-label">Категории</label>
+          <BaseFormField label="Категории">
             <div class="checkbox-grid">
-              <label
+              <BaseCheckbox
                 v-for="category in categories"
                 :key="category.id"
-                class="checkbox-label"
-              >
-                <input
-                  type="checkbox"
-                  class="custom-checkbox"
-                  :value="category.id"
-                  v-model="createForm.category_ids"
-                  :disabled="isProcessing"
-                />
-                {{ category.name }}
-              </label>
+                v-model="createForm.category_ids"
+                :value="category.id"
+                :label="category.name"
+                :disabled="isProcessing"
+              />
             </div>
-          </div>
+          </BaseFormField>
 
-          <!-- Сезоны -->
           <div class="seasons-block">
             <div class="seasons-header">
               <h2 class="section-title">Сезоны</h2>
-              <button
-                type="button"
-                class="btn-action btn-secondary btn-small"
+              <BaseButton
+                variant="secondary"
+                size="sm"
                 :disabled="isProcessing"
                 @click="addSeason"
               >
                 + Добавить сезон
-              </button>
+              </BaseButton>
             </div>
 
             <div v-if="seasons.length === 0" class="empty-state-text">
@@ -82,73 +63,58 @@
             >
               <div class="season-card-header">
                 <span class="season-card-title">Сезон {{ seasonIndex + 1 }}</span>
-                <button
-                  type="button"
-                  class="btn-action btn-danger btn-small"
+                <BaseButton
+                  variant="danger"
+                  size="sm"
                   :disabled="isProcessing"
                   @click="removeSeason(seasonIndex)"
                 >
                   Удалить сезон
-                </button>
+                </BaseButton>
               </div>
 
               <div class="season-fields-grid">
-                <div class="input-field-group">
-                  <label class="field-label">Номер сезона</label>
-                  <input
-                    v-model.number="season.season_number"
-                    type="number"
-                    min="1"
-                    class="custom-input"
-                    :disabled="isProcessing"
-                  />
-                </div>
-
-                <div class="input-field-group">
-                  <label class="field-label">Название</label>
-                  <input
-                    v-model="season.title"
-                    type="text"
-                    class="custom-input"
-                    placeholder="Название сезона"
-                    :disabled="isProcessing"
-                  />
-                </div>
-
-                <div class="input-field-group">
-                  <label class="field-label">Poster URL</label>
-                  <input
-                    v-model="season.poster_url"
-                    type="text"
-                    class="custom-input"
-                    placeholder="https://..."
-                    :disabled="isProcessing"
-                  />
-                </div>
-
-                <div class="input-field-group input-field-group--full">
-                  <label class="field-label">Описание</label>
-                  <textarea
+                <BaseInput
+                  v-model="season.season_number"
+                  type="number"
+                  label="Номер сезона"
+                  :min="1"
+                  :disabled="isProcessing"
+                />
+                <BaseInput
+                  v-model="season.title"
+                  label="Название"
+                  placeholder="Название сезона"
+                  :disabled="isProcessing"
+                />
+                <BaseInput
+                  v-model="season.poster_url"
+                  label="Poster URL"
+                  placeholder="https://..."
+                  :disabled="isProcessing"
+                />
+                <div class="input-field-group--full">
+                  <BaseTextarea
                     v-model="season.description"
-                    class="custom-input custom-textarea"
+                    label="Описание"
                     placeholder="Описание сезона"
                     :disabled="isProcessing"
-                  ></textarea>
+                    :rows="3"
+                  />
                 </div>
               </div>
 
-              <!-- Эпизоды сезона -->
               <div class="episodes-block">
                 <div class="episodes-header">
                   <span class="episodes-title">Эпизоды</span>
-                  <button
-                    type="button"
-                    class="btn-action btn-secondary btn-small"
+                  <BaseButton
+                    variant="secondary"
+                    size="sm"
                     :disabled="isProcessing"
                     @click="addEpisode(seasonIndex)"
                   >
                     + Добавить эпизод
-                  </button>
+                  </BaseButton>
                 </div>
 
                 <div v-if="season.episodes.length === 0" class="empty-state-text">
@@ -162,60 +128,42 @@
                 >
                   <div class="episode-card-header">
                     <span class="episode-card-title">Эпизод {{ episodeIndex + 1 }}</span>
-                    <button
-                      type="button"
-                      class="btn-action btn-danger btn-small"
+                    <BaseButton
+                      variant="danger"
+                      size="sm"
                       :disabled="isProcessing"
                       @click="removeEpisode(seasonIndex, episodeIndex)"
                     >
                       Удалить
-                    </button>
+                    </BaseButton>
                   </div>
 
                   <div class="season-fields-grid">
-                    <div class="input-field-group">
-                      <label class="field-label">Название</label>
-                      <input
-                        v-model="episode.title"
-                        type="text"
-                        class="custom-input"
-                        placeholder="Название эпизода"
-                        :disabled="isProcessing"
-                      />
-                    </div>
-
-                    <div class="input-field-group">
-                      <label class="field-label">Длительность (мин)</label>
-                      <input
-                        v-model.number="episode.duration"
-                        type="number"
-                        min="0"
-                        class="custom-input"
-                        :disabled="isProcessing"
-                      />
-                    </div>
-
-                    <div class="input-field-group">
-                      <label class="field-label">HLS ссылка</label>
-                      <input
-                        v-model="episode.hls_link"
-                        type="text"
-                        class="custom-input"
-                        placeholder="https://..."
-                        :disabled="isProcessing"
-                      />
-                    </div>
-
-                    <div class="input-field-group">
-                      <label class="field-label">Poster URL</label>
-                      <input
-                        v-model="episode.poster_url"
-                        type="text"
-                        class="custom-input"
-                        placeholder="https://..."
-                        :disabled="isProcessing"
-                      />
-                    </div>
+                    <BaseInput
+                      v-model="episode.title"
+                      label="Название"
+                      placeholder="Название эпизода"
+                      :disabled="isProcessing"
+                    />
+                    <BaseInput
+                      v-model="episode.duration"
+                      type="number"
+                      label="Длительность (мин)"
+                      :min="0"
+                      :disabled="isProcessing"
+                    />
+                    <BaseInput
+                      v-model="episode.hls_link"
+                      label="HLS ссылка"
+                      placeholder="https://..."
+                      :disabled="isProcessing"
+                    />
+                    <BaseInput
+                      v-model="episode.poster_url"
+                      label="Poster URL"
+                      placeholder="https://..."
+                      :disabled="isProcessing"
+                    />
                   </div>
                 </div>
               </div>
@@ -223,17 +171,25 @@
           </div>
 
           <div class="action-bar">
-            <button type="submit" class="btn-action btn-success" :disabled="isProcessing">
-              {{ isProcessing ? 'Создание...' : 'Создать сериал' }}
-            </button>
-            <NuxtLink to="/tv-shows" class="btn-action btn-secondary">
+            <BaseButton
+              native-type="submit"
+              variant="success"
+              :loading="isProcessing"
+              loading-text="Создание..."
+            >
+              Создать сериал
+            </BaseButton>
+            <BaseLink to="/media/tv-shows" variant="secondary">
               Отмена
-            </NuxtLink>
+            </BaseLink>
           </div>
         </form>
 
-        <div v-if="errorMessage" class="error-state">
-          {{ errorMessage }}
+        <div v-if="validationError" class="error-state">
+          {{ validationError }}
+        </div>
+        <div v-else-if="error" class="error-state">
+          {{ error }}
         </div>
       </div>
     </BaseForm>
@@ -241,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import type { Category } from '~/types/CategoryTypes'
 import type { CreateEpisodeDto } from '~/types/MediaTypes'
 
@@ -254,9 +210,8 @@ const router = useRouter()
 const mediaService = useMedia()
 const categoryService = useCategory()
 
-const isProcessing = ref(false)
-const errorMessage = ref<string | null>(null)
 const categories = ref<Category[]>([])
+const validationError = ref<string | null>(null)
 
 interface EpisodeDraft {
   title: string
@@ -296,13 +251,9 @@ const createEmptySeason = (): SeasonDraft => ({
   episodes: []
 })
 
-const addSeason = () => {
-  seasons.value.push(createEmptySeason())
-}
+const addSeason = () => seasons.value.push(createEmptySeason())
 
-const removeSeason = (index: number) => {
-  seasons.value.splice(index, 1)
-}
+const removeSeason = (index: number) => seasons.value.splice(index, 1)
 
 const addEpisode = (seasonIndex: number) => {
   seasons.value[seasonIndex].episodes.push(createEmptyEpisode())
@@ -320,17 +271,8 @@ const fetchCategories = async () => {
   }
 }
 
-const handleCreate = async () => {
-  if (!createForm.title || !createForm.description) {
-    errorMessage.value = 'Заполните название и описание сериала'
-    return
-  }
-
-  try {
-    isProcessing.value = true
-    errorMessage.value = null
-
-    // 1. Создаём media (tv_show)
+const { isProcessing, error, execute } = useAsyncAction(
+  async () => {
     const createdMedia = await mediaService.create({
       title: createForm.title,
       description: createForm.description,
@@ -338,9 +280,8 @@ const handleCreate = async () => {
       category_ids: createForm.category_ids
     })
 
-    // 2. Последовательно создаём сезоны и их эпизоды
     for (const season of seasons.value) {
-      const { season: createdSeason } = await mediaService.addSeasonWithEpisodes(
+      await mediaService.addSeasonWithEpisodes(
         createdMedia.id,
         {
           season_number: season.season_number,
@@ -355,50 +296,32 @@ const handleCreate = async () => {
           poster_url: ep.poster_url
         }))
       )
-      console.log('Создан сезон:', createdSeason.id)
     }
 
-    useToastify(`Сериал «${createForm.title}» создан`, {
-      type: 'success',
-      autoClose: 3000,
-      theme: 'auto'
-    })
-
-    router.push('/media/tv-shows')
-  } catch (err: any) {
-    errorMessage.value = err.message || 'Ошибка при создании'
-    useToastify(`Ошибка ${err.status || ''}`, {
-      type: 'error',
-      autoClose: 3000,
-      theme: 'auto'
-    })
-    console.error('Ошибка при создании сериала:', err)
-  } finally {
-    isProcessing.value = false
+    return createdMedia
+  },
+  {
+    toast: {
+      successMessage: () => `Сериал «${createForm.title}» создан`,
+      errorMessage: (e) => e?.data?.detail || `Ошибка ${e?.status || ''}`,
+    },
+    onSuccess: () => router.push('/media/tv-shows'),
   }
+)
+
+const handleSubmit = () => {
+  validationError.value = null
+  if (!createForm.title || !createForm.description) {
+    validationError.value = 'Заполните название и описание сериала'
+    return
+  }
+  execute().catch(() => {})
 }
 
-onMounted(() => {
-  fetchCategories()
-})
+onMounted(fetchCategories)
 </script>
 
 <style scoped>
-.navigation-bar {
-  margin-bottom: 16px;
-}
-
-.btn-back {
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.btn-back:hover {
-  color: #ffffff;
-}
-
 .form-content {
   display: flex;
   flex-direction: column;
@@ -422,67 +345,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.input-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-field-group--full {
-  grid-column: 1 / -1;
-}
-
-.field-label {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
-.custom-input {
-  width: 100%;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #333333;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.custom-textarea {
-  min-height: 80px;
-  resize: vertical;
-  font-family: inherit;
-}
-
-.custom-input:disabled {
-  background: rgba(255, 255, 255, 0.5);
-  cursor: not-allowed;
-}
-
-.checkbox-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.custom-checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: #2ec4b6;
-  cursor: pointer;
 }
 
 .seasons-block {
@@ -536,6 +398,10 @@ onMounted(() => {
   gap: 12px;
 }
 
+.input-field-group--full {
+  grid-column: 1 / -1;
+}
+
 .episodes-block {
   display: flex;
   flex-direction: column;
@@ -578,86 +444,10 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.empty-state-text {
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-  font-size: 13px;
-  padding: 6px 0;
-}
-
 .action-bar {
   margin-top: 8px;
   display: flex;
   gap: 12px;
   align-items: center;
-}
-
-.btn-action {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.2s, transform 0.1s, background 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.btn-action:active {
-  transform: scale(0.98);
-}
-
-.btn-action:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-small {
-  padding: 6px 12px;
-  font-size: 13px;
-}
-
-.btn-success {
-  background-color: #2ec4b6;
-  color: white;
-  width: max-content;
-}
-
-.btn-secondary {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-.btn-danger {
-  background-color: #e71d36;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c9182d;
-}
-
-.error-state {
-  color: #ff6b6b;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  font-size: 14px;
-  text-align: center;
-}
-
-.loading-state {
-  color: #ffffff;
-  padding: 20px 0;
-  text-align: center;
 }
 </style>

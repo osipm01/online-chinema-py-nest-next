@@ -3,10 +3,19 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: false,
   css: ['~~/assets/css/main.css'],
-  modules: ['nuxt-toastify'], 
+
+  modules: ['nuxt-toastify'],
   toastify: {
-    position: 'top-right', 
+    position: 'top-right',
     autoClose: 3000,
-    theme: 'dark'          
-  }
+    theme: 'dark',
+  },
+
+  // ✅ Регистрируем все компоненты из ~/components без префикса
+  components: [
+    {
+      path: '~/components',
+      pathPrefix: false,
+    },
+  ],
 })
