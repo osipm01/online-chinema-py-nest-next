@@ -1,0 +1,127 @@
+@use './mixins' as *;
+
+.field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fullWidth { display: flex; width: 100%; }
+
+.label {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.control {
+  --input-h: 40px;
+  --input-fs: 14px;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--input-h);
+  padding: 0 14px;
+  border-radius: 14px;
+  @include glass-surface(6%);
+  color: var(--text-muted);
+  border: 1px solid color-mix(in srgb, var(--text-main) 14%, transparent);
+  @include transition-base;
+
+  &:hover:not(.disabled) {
+    border-color: color-mix(in srgb, var(--text-main) 24%, transparent);
+  }
+
+  // Фокус подсвечивает всю обёртку мягким свечением
+  &:focus-within {
+    color: var(--text-main);
+    border-color: color-mix(in srgb, var(--color-primary) 70%, transparent);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-primary) 22%, transparent),
+      0 0 24px color-mix(in srgb, var(--color-primary) 24%, transparent);
+  }
+}
+
+.sm { --input-h: 34px; --input-fs: 13px; padding: 0 12px; border-radius: 12px; }
+.md { --input-h: 44px; --input-fs: 14px; }
+.lg { --input-h: 52px; --input-fs: 15px; padding: 0 18px; border-radius: 16px; }
+
+.pill { border-radius: 999px; }
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-size: var(--input-fs);
+  letter-spacing: 0.01em;
+
+  &::placeholder {
+    color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+  }
+  &:disabled { cursor: not-allowed; }
+
+  // Автозаполнение: убираем «жёлтый» фон браузера
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-main);
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  // type="search": убираем нативный крестик
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.25s ease;
+
+  svg { width: 18px; height: 18px; }
+
+  .control:focus-within & { color: var(--text-main); }
+}
+
+.hasError {
+  border-color: color-mix(in srgb, var(--color-danger, #ff5470) 70%, transparent);
+
+  &:focus-within {
+    border-color: var(--color-danger, #ff5470);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-danger, #ff5470) 24%, transparent),
+      0 0 24px color-mix(in srgb, var(--color-danger, #ff5470) 26%, transparent);
+  }
+}
+
+.disabled {
+  background: color-mix(in srgb, var(--text-main) 4%, transparent);
+  color: var(--text-disabled);
+  opacity: 0.6;
+  cursor: not-allowed;
+
+  .input { color: var(--text-disabled); }
+}
+
+.help {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding-left: 4px;
+}
+
+.helpError { color: var(--color-danger, #ff5470); }
+
+@media (prefers-reduced-motion: reduce) {
+  .control { transition: none; }
+  .icon { transition: none; }
+}

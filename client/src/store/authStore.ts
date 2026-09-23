@@ -6,7 +6,6 @@ import type { IUser } from '../types/authTypes'
 export interface IAuthState {
   user: IUser | null
   isAuthenticated: boolean
-  /** true, пока идёт первичная проверка сессии через /api/auth/session */
   isBootstrapping: boolean
 }
 

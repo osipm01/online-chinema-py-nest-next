@@ -1,0 +1,118 @@
+@use './mixins' as *;
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+// ---- Ориентация
+.horizontal {
+  flex-direction: row;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.vertical {
+  flex-direction: column;
+  align-items: stretch;
+
+  .item {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
+// ---- Размеры (высота и паддинги пунктов)
+.sm .item { height: 30px; padding: 0 12px; font-size: 13px; }
+.md .item { height: 36px; padding: 0 16px; font-size: 14px; }
+.lg .item { height: 42px; padding: 0 20px; font-size: 15px; }
+
+// ---- Пункт-пилюля
+.item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  @include transition-base;
+
+  // лёгкий блик сверху, как у стеклянных поверхностей
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, #fff 12%, transparent),
+      transparent 55%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  &:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--text-main) 6%, transparent);
+
+    &::before { opacity: 1; }
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+// ---- Активный пункт: стеклянная пилюля со свечением
+.active {
+  color: var(--text-main);
+  @include glass-surface(10%);
+  border-color: color-mix(in srgb, var(--text-main) 16%, transparent);
+  box-shadow:
+    0 6px 18px color-mix(in srgb, #000 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
+
+  &::before { opacity: 1; }
+
+  &:hover {
+    background: color-mix(in srgb, var(--text-main) 12%, transparent);
+  }
+}
+
+// ---- Отключённый пункт
+.disabled {
+  color: var(--text-disabled);
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  svg { width: 1.25em; height: 1.25em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item { transition: none; }
+  .item::before { transition: none; }
+  .item:active { transform: none; }
+}

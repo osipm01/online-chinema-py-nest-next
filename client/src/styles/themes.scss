@@ -1,0 +1,112 @@
+@use "sass:map";
+
+$themes: (
+  dark: (
+    // Фоновые цвета
+    "bg-main":          #080413,
+    "bg-card":          #16122c,
+    "bg-card-hover":    #211b3d,
+    "bg-overlay":       rgba(8, 4, 19, 0.6),
+
+    // Брендовые / Акцентные цвета
+    "color-primary":    #6336fa,
+    "color-accent":     #00bfff,
+    "color-secondary":  #251f47,
+
+    // Текст и интерфейс
+    "text-main":        #ffffff,
+    "text-muted":       #948fa8,
+    "text-disabled":    #524d68,
+
+    // Системные / Статусы
+    "color-rating":     #ffb800,
+    "color-progress":   #6336fa,
+    "color-track":      #251f47
+  ),
+
+  light: (
+    // Фоновые цвета
+    "bg-main":          #f7f8fa,
+    "bg-card":          #ffffff,
+    "bg-card-hover":    #f0f2f5,
+    "bg-overlay":       rgba(247, 248, 250, 0.7),
+
+    // Брендовые / Акцентные цвета
+    "color-primary":    #5224ec,
+    "color-accent":     #008acc,
+    "color-secondary":  #e8e6f5,
+
+    // Текст и интерфейс
+    "text-main":        #130f26,
+    "text-muted":       #686578,
+    "text-disabled":    #a09db0,
+
+    // Системные / Статусы
+    "color-rating":     #e6a100,
+    "color-progress":   #5224ec,
+    "color-track":      #e8e6f5
+  )
+);
+
+// ==========================================================================
+// МИКСИН ДЛЯ АВТОМАТИЧЕСКОЙ ГЕНЕРАЦИИ CSS-ПЕРЕМЕННЫХ
+// ==========================================================================
+
+@mixin theme-properties($theme-name) {
+  $theme-map: map.get($themes, $theme-name);
+  @each $key, $value in $theme-map {
+    --#{$key}: #{$value};
+  }
+}
+
+// Генерируем переменные в root (по умолчанию темная тема)
+:root {
+  @include theme-properties(dark);
+
+  // Сложные градиенты, которые не ложатся в обычные переменные
+  --gradient-hero: linear-gradient(135deg, #1c0b3a 0%, #080413 100%);
+  --gradient-accent: linear-gradient(90deg, #6336fa 0%, #00bfff 100%);
+}
+
+// Переопределяем переменные для светлой темы
+body.light-theme {
+  @include theme-properties(light);
+
+  --gradient-hero: linear-gradient(135deg, #f3eefc 0%, #f7f8fa 100%);
+  --gradient-accent: linear-gradient(90deg, #5224ec 0%, #008acc 100%);
+}
+
+// ==========================================================================
+// ПРИМЕР ПРИМЕНЕНИЯ В КОМПОНЕНТАХ МАКЕТА
+// ==========================================================================
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hero-banner {
+  background: var(--gradient-hero);
+}
+
+.movie-card {
+  background-color: var(--bg-card);
+
+  &:hover {
+    background-color: var(--bg-card-hover);
+  }
+}
+
+.text-muted-info {
+  color: var(--text-muted);
+}
+
+.rating-badge {
+  color: var(--color-rating);
+}
+
+.btn-watch {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}

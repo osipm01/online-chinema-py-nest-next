@@ -1,0 +1,116 @@
+@use '../../components/ui/styles/mixins' as *;
+
+.page {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 24px;
+  overflow: hidden;
+  // background: var(--bg-page, #0b0d12);
+  color: var(--text-main);
+  padding-top: 56px;
+}
+
+// ---- Карточка
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  border-radius: 24px;
+
+  // стеклянная поверхность
+  background: color-mix(in srgb, var(--text-main) 6%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid color-mix(in srgb, var(--text-main) 14%, transparent);
+  box-shadow:
+    0 30px 80px color-mix(in srgb, #000 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+
+  animation: fadeUp 0.5s ease both;
+
+  &.cardRegister {
+    max-width: 440px;
+  }
+}
+
+// ---- Заголовок
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+  animation: fadeUp 0.4s ease both;
+}
+
+.subtitle {
+  margin: -12px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  animation: fadeUp 0.45s ease both;
+}
+
+// ---- Поля
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fieldWrap {
+  @include fade-up;
+}
+
+// ---- Кнопка
+.submitWrap {
+  @include fade-up;
+  margin-top: 4px;
+}
+
+// ---- Ошибка
+.error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: var(--color-danger, #ff5470);
+  background: color-mix(in srgb, var(--color-danger, #ff5470) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger, #ff5470) 35%, transparent);
+  font-size: 13px;
+  @include fade-up;
+}
+
+// ---- Переключение режима
+.switch {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  @include fade-up;
+}
+
+// BaseLink как кнопка — убираем «ссылочный» вид, оставляем цвет
+.switchLink {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+// ---- Юридический текст
+.legal {
+  margin: 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--text-muted) 75%, transparent);
+  font-size: 12px;
+  line-height: 1.5;
+  @include fade-up;
+}

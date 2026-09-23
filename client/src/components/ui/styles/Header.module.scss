@@ -1,0 +1,179 @@
+// Header.module.scss
+
+// ==========================================================================
+// ПЕРЕМЕННЫЕ КОМПОНЕНТА (Локальные, не зависят от темы)
+// ==========================================================================
+$header-height: 72px;
+$header-max-width: 1200px;
+$transition-speed: 0.3s;
+$border-radius-pill: 50px;
+$border-radius-card: 24px;
+
+// ==========================================================================
+// ОСНОВНАЯ ОБЕРТКА (Fixed + Floating)
+// ==========================================================================
+.headerWrapper {
+  position: fixed; // Жестко фиксируем сверху
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; // Поверх всего контента
+  display: flex;
+  justify-content: center;
+
+  // Плавный переход для отступов при скролле
+  transition: padding $transition-speed ease;
+
+  // Начальное состояние (сверху страницы) - парит
+  padding: 20px 24px;
+
+  // Состояние при скролле (добавляется класс .scrolled из React)
+  &.scrolled {
+    padding: 10px 24px; // Уменьшаем отступ, чтобы "прижаться" ближе к верху
+
+    .container {
+      // При скролле делаем фон чуть плотнее (используем bg-overlay из темы)
+      background: var(--bg-overlay);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      // Усиливаем блюр
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-color: var(--color-secondary); // Граница становится чуть заметнее
+    }
+  }
+}
+
+// ==========================================================================
+// КОНТЕЙНЕР (Сама "карточка" хедера)
+// ==========================================================================
+.container {
+  width: 100%;
+  max-width: $header-max-width;
+  height: $header-height;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  // --- ИСПОЛЬЗУЕМ ПЕРЕМЕННЫЕ ИЗ ТЕМЫ ---
+  background: var(--bg-card); // Фон карточки (темный или светлый)
+  border: 1px solid var(--color-secondary); // Граница из темы
+  color: var(--text-main); // Основной текст
+
+  // Скругления и отступы
+  border-radius: $border-radius-card;
+  padding: 0 24px;
+
+  // Эффект стекла (Glassmorphism) для "парения"
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  // Тень
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+  transition: all $transition-speed ease;
+}
+
+// ==========================================================================
+// ЛЕВАЯ ЧАСТЬ (Лого + Навигация)
+// ==========================================================================
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main); // Белый в темной, темный в светлой
+  text-decoration: none;
+  letter-spacing: -0.5px;
+  transition: color 0.2s ease;
+
+  span {
+    color: var(--color-primary); // Акцентная точка (фиолетовая)
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// ==========================================================================
+// ПРАВАЯ ЧАСТЬ (Профиль / Вход)
+// ==========================================================================
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+// --- Заглушка профиля (Pill Shape) ---
+.profileStub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px 6px 6px; // Отступы: слева меньше (под аватар)
+
+  // Фон: используем bg-secondary или hover, чтобы выделить блок
+  background: var(--color-secondary);
+  border-radius: $border-radius-pill;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-card-hover); // При наведении меняем фон
+    border-color: var(--color-primary); // Подсвечиваем границу акцентом
+  }
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  // Градиент из твоей темы (accent -> primary)
+  background: var(--gradient-accent);
+  color: #ffffff; // Всегда белый текст на градиенте
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(99, 54, 250, 0.4); // Тень от фиолетового
+}
+
+.userName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main); // Основной цвет текста темы
+
+  // Скрываем имя на мобильных
+  @media (max-width: 640px) {
+    display: none;
+  }
+}
+
+// --- Кнопка входа (если не авторизован) ---
+.loginBtn {
+  background: var(--color-primary); // Фиолетовый из темы
+  color: #ffffff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:active {
+    transform: scale(0.98); // Эффект нажатия
+  }
+}

@@ -82,10 +82,13 @@ export class AuthService {
     return data as T
   }
 
-  register(data: RegisterDto): Promise<LoginResult> {
+  register(data: Omit<RegisterDto, 'role'>): Promise<LoginResult> {
     return this.request<LoginResult>('/api/auth/register', {
       method: 'POST',
-      body: data,
+      body: {
+        ...data,
+        role: 'user', // принудительно, клиент не может выбрать роль
+      },
     })
   }
 

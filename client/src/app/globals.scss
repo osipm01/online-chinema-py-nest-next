@@ -1,0 +1,78 @@
+/* app/globals.css (или src/index.css) */
+@import "tailwindcss";
+
+/* ==========================================================================
+   Переменные темы
+   Значения ниже — заглушки. Замени их на свои из styles/themes.
+   ========================================================================== */
+
+:root {
+  --bg-main: #0f0f14;
+  --text-main: #ffffff;
+  --color-primary: #6336fa;
+  --color-accent: #00b8d9;
+}
+
+/* ==========================================================================
+   Глобальный фон
+   ========================================================================== */
+
+html,
+body {
+  min-height: 100vh;
+}
+
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Декоративные светящиеся пятна */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: -1;
+  animation: float 12s ease-in-out infinite;
+}
+
+body::before {
+  width: 420px;
+  height: 420px;
+  top: -120px;
+  left: -120px;
+  background: var(--color-primary);
+}
+
+body::after {
+  width: 360px;
+  height: 360px;
+  bottom: -100px;
+  right: -100px;
+  background: var(--color-accent);
+  animation-delay: -6s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, -30px) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  body::before,
+  body::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

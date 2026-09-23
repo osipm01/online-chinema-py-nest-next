@@ -1,0 +1,159 @@
+@use './mixins' as *;
+
+.button {
+  --btn-h: 40px;
+  --btn-px: 18px;
+  --btn-fs: 14px;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--btn-h);
+  padding: 0 var(--btn-px);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 500 var(--btn-fs) / 1 inherit;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  @include transition-base;
+
+  // лёгкий блик сверху, как у стеклянных поверхностей
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, #fff 14%, transparent),
+      transparent 55%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  &:hover:not(:disabled)::before {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--text-disabled);
+    background: color-mix(in srgb, var(--text-main) 6%, transparent);
+    border-color: transparent;
+    filter: none;
+    opacity: 0.6;
+  }
+}
+
+// ---- Размеры
+.sm { --btn-h: 32px; --btn-px: 14px; --btn-fs: 13px; }
+.md { --btn-h: 40px; --btn-px: 18px; --btn-fs: 14px; }
+.lg { --btn-h: 48px; --btn-px: 26px; --btn-fs: 15px; }
+
+// ---- Варианты
+.primary {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-primary) 92%, #fff 8%),
+    var(--color-primary)
+  );
+  color: #fff;
+  box-shadow:
+    0 10px 24px color-mix(in srgb, var(--color-primary) 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 25%, transparent);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow:
+      0 12px 28px color-mix(in srgb, var(--color-primary) 45%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #fff 30%, transparent);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+}
+
+.secondary {
+  @include glass-surface(8%);
+  color: var(--text-main);
+  border-color: color-mix(in srgb, var(--text-main) 14%, transparent);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--text-main) 12%, transparent);
+    border-color: color-mix(in srgb, var(--text-main) 22%, transparent);
+  }
+}
+
+.outline {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: color-mix(in srgb, var(--text-main) 16%, transparent);
+
+  &:hover:not(:disabled) {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--text-main) 8%, transparent);
+    border-color: color-mix(in srgb, var(--text-main) 26%, transparent);
+  }
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text-muted);
+
+  &:hover:not(:disabled) {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--text-main) 8%, transparent);
+  }
+}
+
+// ---- Модификаторы
+.iconOnly {
+  width: var(--btn-h);
+  padding: 0;
+}
+
+.fullWidth { width: 100%; }
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  svg { width: 1.25em; height: 1.25em; }
+}
+
+.iconOnly .icon svg { width: 20px; height: 20px; }
+
+.loading { pointer-events: none; }
+
+.spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
+  .button::before { transition: none; }
+  .spinner { animation-duration: 2s; }
+}

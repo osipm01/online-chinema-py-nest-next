@@ -1,0 +1,54 @@
+@use './mixins' as *;
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  @include transition-base;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.icon {
+  display: inline-flex;
+
+  svg { width: 1.25em; height: 1.25em; }
+}
+
+// ---- Пункт меню (пилюля)
+.nav {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &:hover { color: var(--text-main); }
+
+  &.active {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--text-main) 10%, transparent);
+    @include border-subtle(14%);
+  }
+}
+
+// ---- Ссылка в тексте
+.text {
+  color: var(--color-accent);
+  text-underline-offset: 3px;
+
+  &:hover { text-decoration: underline; }
+  &.active { color: var(--color-primary); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link { transition: none; }
+}
