@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import Link from 'next/link';
 import { cx } from './cx';
 import styles from './styles/BaseNav.module.scss';
 
@@ -79,14 +80,15 @@ export default function BaseNav<E extends ElementType = 'a'>({
           );
         }
 
-        const Component: ElementType = item.as ?? as ?? 'a';
+        const isExternal =
+          typeof item.href === 'string' && /^https?:\/\//.test(item.href);
+        const Component: ElementType =
+          item.as ?? as ?? (isExternal || !item.href ? 'a' : Link);
 
         // Для внешних ссылок — безопасное открытие в новой вкладке
         const extra: Record<string, unknown> = {};
         if (
-          Component === 'a' &&
-          typeof item.href === 'string' &&
-          /^https?:\/\//.test(item.href) &&
+          isExternal &&
           !(item.linkProps as { target?: unknown } | undefined)?.target
         ) {
           extra.target = '_blank';

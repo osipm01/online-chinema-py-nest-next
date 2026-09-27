@@ -1,29 +1,14 @@
-/* app/globals.css (или src/index.css) */
 @import "tailwindcss";
-
-/* ==========================================================================
-   Переменные темы
-   Значения ниже — заглушки. Замени их на свои из styles/themes.
-   ========================================================================== */
-
-:root {
-  --bg-main: #0f0f14;
-  --text-main: #ffffff;
-  --color-primary: #6336fa;
-  --color-accent: #00b8d9;
-}
-
-/* ==========================================================================
-   Глобальный фон
-   ========================================================================== */
+@import "../styles/themes.scss";
 
 html,
 body {
   min-height: 100vh;
+  padding-top: 56px;
 }
 
 body {
-  background: var(--bg-main);
+  background-color: var(--bg-main);
   color: var(--text-main);
   transition: background-color 0.3s ease, color 0.3s ease;
 }

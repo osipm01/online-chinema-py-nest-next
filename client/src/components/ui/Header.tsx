@@ -5,47 +5,51 @@ import Link from 'next/link';
 import BaseNav, { NavItem } from './BaseNav';
 import { cx } from './cx';
 import styles from './styles/Header.module.scss';
+import { usePathname } from 'next/navigation';
+import {
+  useAuthStore,
+  selectUser,
+  selectIsAuthenticated,
+  selectUserName,
+} from '@/store/authStore';
 
-// Пункты меню.
-// Важно: BaseNav использует activeKey для подсветки.
 const NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Главная', href: '/' },
   { key: 'movies', label: 'Фильмы', href: '/movies' },
   { key: 'series', label: 'Сериалы', href: '/series' },
-  { key: 'collections', label: 'Коллекции', href: '/collections' },
+  { key: 'profile', label: 'Профиль', href: '/profile' },
 ];
 
-// Данные пользователя (пока хардкод)
-const MOCK_USER = {
-  name: 'Александр',
-  initials: 'АС',
-  isLoggedIn: true, // Попробуй поменять на false, чтобы увидеть кнопку "Войти"
-};
+const AUTH_ITEM: NavItem[] = [
+  { key: 'auth', label: 'Войти', href: '/auth' },
+];
 
-// ==========================================================================
-// КОМПОНЕНТ HEADER
-// ==========================================================================
+// Утилита: получить инициалы из имени пользователя
+const getInitials = (name: string) =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
 
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
 
-  // Эффект для отслеживания скролла
+  // Данные из стора
+  const user = useAuthStore(selectUser);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const userName = useAuthStore(selectUserName);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
+
   useEffect(() => {
-    const handleScroll = () => {
-      // Если прокрутили больше 20px, включаем режим "compact"
-      // Это активирует класс .scrolled в SCSS
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    // Слушаем событие
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-
-    // Очистка при размонтировании
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    // cx - это твоя утилита для склейки классов (аналог clsx)
     <header className={cx(styles.headerWrapper, isScrolled && styles.scrolled)}>
       <div className={styles.container}>
 
@@ -55,14 +59,9 @@ export const Header = () => {
             Cinema<span>.</span>
           </Link>
 
-          {/*
-            Используем BaseNav.
-            orientation="horizontal" - для хедера.
-            size="sm" - компактный размер.
-          */}
           <BaseNav
             items={NAV_ITEMS}
-            activeKey="home" // TODO: Заменить на usePathname() из next/navigation
+            activeKey={pathname}
             orientation="horizontal"
             size="sm"
             label="Основная навигация"
@@ -71,24 +70,29 @@ export const Header = () => {
 
         {/* --- ПРАВАЯ ЧАСТЬ --- */}
         <div className={styles.rightSection}>
-          {MOCK_USER.isLoggedIn ? (
-            // Профиль (Заглушка)
-            <div className={styles.profileStub}>
-              <div className={styles.avatar}>
-                {MOCK_USER.initials}
-              </div>
-              <span className={styles.userName}>
-                {MOCK_USER.name}
-              </span>
+          {isBootstrapping ? (
+            // Пока не знаем статус — показываем skeleton, чтобы не мигало
+            <div className={styles.profileStub} aria-hidden="true">
+              <div className={styles.avatar} />
             </div>
+          ) : isAuthenticated && user ? (
+            <Link href="/profile" className={styles.profileStub}>
+              <div className={styles.avatar}>
+                {getInitials(userName) || 'U'}
+              </div>
+              <span className={styles.userName}>{userName}</span>
+            </Link>
           ) : (
-            // Кнопка входа
-            <button className={styles.loginBtn}>
-              Войти
-            </button>
+            // Гостю показываем кнопку "Войти"
+            <BaseNav
+              items={AUTH_ITEM}
+              activeKey={pathname}
+              orientation="horizontal"
+              size="sm"
+              label="Авторизация"
+            />
           )}
         </div>
-
       </div>
     </header>
   );
