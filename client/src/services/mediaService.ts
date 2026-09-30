@@ -1,17 +1,11 @@
-import { BaseApiService } from './BaseApiService'
+import { BaseApiService } from './baseApiService'
 import type {
   Media,
   MediaDetail,
-  CreateMediaDto,
-  UpdateMediaDto,
   Season,
-  SeasonWithEpisodes,
-  CreateSeasonDto,
-  UpdateSeasonDto,
+  // SeasonWithEpisodes,
   Episode,
-  CreateEpisodeDto,
-  UpdateEpisodeDto,
-} from '@/types/MediaTypes'
+} from '@/types/mediaTypes'
 
 
 export class MediaService extends BaseApiService {

@@ -1,4 +1,13 @@
 export default defineNuxtConfig({
+
+  devServer: {
+    port: 3400 // Укажите нужный порт
+  },
+
+  app: {
+    baseURL: '/admin/' 
+  },
+
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   ssr: false,

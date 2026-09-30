@@ -6,6 +6,41 @@ export class ApiError extends Error {
   ) {
     super(message)
     this.name = 'ApiError'
+    Object.setPrototypeOf(this, ApiError.prototype) // важно для instanceof при таргете ES5
+  }
+}
+
+/** Ошибка сети / недоступность сервера / abort */
+export class NetworkError extends Error {
+  constructor(
+    message: string,
+    public cause?: unknown,
+  ) {
+    super(message)
+    this.name = 'NetworkError'
+    Object.setPrototypeOf(this, NetworkError.prototype)
+  }
+}
+
+/** Ошибка парсинга ответа */
+export class ParseError extends Error {
+  constructor(
+    message: string,
+    public raw?: string,
+    public cause?: unknown,
+  ) {
+    super(message)
+    this.name = 'ParseError'
+    Object.setPrototypeOf(this, ParseError.prototype)
+  }
+}
+
+/** Прерванный запрос */
+export class RequestAbortedError extends Error {
+  constructor(message = 'Request aborted') {
+    super(message)
+    this.name = 'RequestAbortedError'
+    Object.setPrototypeOf(this, RequestAbortedError.prototype)
   }
 }
 
@@ -19,46 +54,97 @@ export interface RequestOptions {
 }
 
 export class BaseApiService {
-  /** Префикс BFF-прокси, к которому цепляется путь сервиса */
   protected prefix = '/api/proxy'
 
   protected async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, query, signal } = options
 
-    const url = new URL(`${this.prefix}${path}`, window.location.origin)
+    // 1. Валидация входных данных
+    let url: URL
+    try {
+      url = new URL(`${this.prefix}${path}`, window.location.origin)
+    } catch (e) {
+      throw new ApiError(`Invalid URL: ${this.prefix}${path}`, 0, e)
+    }
+
     if (query) {
-      for (const [k, v] of Object.entries(query)) {
-        if (v !== undefined && v !== null) url.searchParams.set(k, String(v))
+      try {
+        for (const [k, v] of Object.entries(query)) {
+          if (v !== undefined && v !== null) url.searchParams.set(k, String(v))
+        }
+      } catch (e) {
+        throw new ApiError('Failed to build query string', 0, e)
       }
     }
 
-    const res = await fetch(url.toString(), {
-      method,
-      credentials: 'include', // ← без этого httpOnly cookie не уйдут на BFF
-      signal,
-      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    })
+    // 2. Сериализация body
+    let serializedBody: string | undefined
+    if (body !== undefined) {
+      try {
+        serializedBody = JSON.stringify(body)
+      } catch (e) {
+        throw new ApiError('Failed to serialize request body', 0, e)
+      }
+    }
 
-    const text = await res.text()
-    const data = text ? safeParse(text) : null
+    // 3. Проверка на уже отменённый сигнал
+    if (signal?.aborted) {
+      throw new RequestAbortedError()
+    }
 
+    // 4. Сам запрос
+    let res: Response
+    try {
+      res = await fetch(url.toString(), {
+        method,
+        credentials: 'include',
+        signal,
+        headers: serializedBody !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+        body: serializedBody,
+      })
+    } catch (e) {
+      // AbortError имеет имя 'AbortError'
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        throw new RequestAbortedError()
+      }
+      throw new NetworkError(
+        e instanceof Error ? e.message : 'Network request failed',
+        e,
+      )
+    }
+
+    // 5. Чтение тела
+    let text: string
+    try {
+      text = await res.text()
+    } catch (e) {
+      throw new ParseError('Failed to read response body', undefined, e)
+    }
+
+    // 6. Парсинг
+    let data: unknown = null
+    if (text) {
+      try {
+        data = JSON.parse(text)
+      } catch {
+        // не JSON — оставляем как строку, это не всегда ошибка (например, plain text)
+        data = text
+      }
+    }
+
+    // 7. Обработка HTTP-ошибок
     if (!res.ok) {
       const message =
-        (data as any)?.detail ??
-        (data as any)?.message ??
+        (isRecord(data) && (data.detail || data.message)) ||
+        res.statusText ||
         `Request failed with status ${res.status}`
-      throw new ApiError(message, res.status, data)
+      throw new ApiError(String(message), res.status, data)
     }
 
     return data as T
   }
 }
 
-function safeParse(text: string): unknown {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return text
-  }
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null
 }
