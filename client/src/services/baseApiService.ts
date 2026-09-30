@@ -44,8 +44,6 @@ export class RequestAbortedError extends Error {
   }
 }
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-
 export interface RequestOptions {
   method?: HttpMethod
   body?: unknown
@@ -53,11 +51,24 @@ export interface RequestOptions {
   signal?: AbortSignal
 }
 
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+export interface RequestOptions {
+  method?: HttpMethod
+  body?: unknown
+  query?: Record<string, string | number | boolean | undefined | null>
+  signal?: AbortSignal
+  /** Полный URL бэкенда (приоритет над backendPort) */
+  backendUrl?: string
+  /** Порт бэкенда, напр. 8000 */
+  backendPort?: number | string
+}
+
 export class BaseApiService {
   protected prefix = '/api/proxy'
 
   protected async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { method = 'GET', body, query, signal } = options
+    const { method = 'GET', body, query, signal, backendUrl, backendPort } = options
 
     // 1. Валидация входных данных
     let url: URL
@@ -92,18 +103,23 @@ export class BaseApiService {
       throw new RequestAbortedError()
     }
 
-    // 4. Сам запрос
+    // 4. Заголовки: прокидываем целевой бэкенд в прокси
+    const headers: Record<string, string> = {}
+    if (serializedBody !== undefined) headers['Content-Type'] = 'application/json'
+    if (backendUrl) headers['x-backend-url'] = backendUrl
+    if (backendPort !== undefined) headers['x-backend-port'] = String(backendPort)
+
+    // 5. Сам запрос
     let res: Response
     try {
       res = await fetch(url.toString(), {
         method,
         credentials: 'include',
         signal,
-        headers: serializedBody !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+        headers,
         body: serializedBody,
       })
     } catch (e) {
-      // AbortError имеет имя 'AbortError'
       if (e instanceof DOMException && e.name === 'AbortError') {
         throw new RequestAbortedError()
       }
@@ -113,7 +129,7 @@ export class BaseApiService {
       )
     }
 
-    // 5. Чтение тела
+    // 6. Чтение тела
     let text: string
     try {
       text = await res.text()
@@ -121,18 +137,17 @@ export class BaseApiService {
       throw new ParseError('Failed to read response body', undefined, e)
     }
 
-    // 6. Парсинг
+    // 7. Парсинг
     let data: unknown = null
     if (text) {
       try {
         data = JSON.parse(text)
       } catch {
-        // не JSON — оставляем как строку, это не всегда ошибка (например, plain text)
         data = text
       }
     }
 
-    // 7. Обработка HTTP-ошибок
+    // 8. Обработка HTTP-ошибок
     if (!res.ok) {
       const message =
         (isRecord(data) && (data.detail || data.message)) ||
