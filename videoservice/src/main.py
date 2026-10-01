@@ -20,7 +20,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 2. Настраиваем CORS для любых IP и доменов
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Разрешает запросы с любых доменов и IP
