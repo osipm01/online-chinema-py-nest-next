@@ -35,7 +35,7 @@ export default function Home() {
   }, [media])
 
   return (
-    <div className="pt-56 py-20 px-20">
+    <div className="py-20 px-20">
       <h1 className="text-2xl font-bold mb-6">Сериалы</h1>
 
       {loading && <p className="text-gray-500">Загрузка...</p>}
