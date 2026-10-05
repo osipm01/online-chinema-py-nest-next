@@ -16,6 +16,7 @@ export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+
   // Куда вернуть пользователя после входа.
   // Приоритет: ?from=... → главная.
   const from = searchParams.get('from') || '/';

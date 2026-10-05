@@ -11,6 +11,7 @@ import type {
   ResetPasswordResponse,
 } from '../types/authTypes'
 
+import { useAuthStore } from '../store/authStore'
 
 export interface LoginResult {
   user: IUser
@@ -82,35 +83,47 @@ export class AuthService {
     return data as T
   }
 
-  register(data: Omit<RegisterDto, 'role'>): Promise<LoginResult> {
-    return this.request<LoginResult>('/api/auth/register', {
-      method: 'POST',
-      body: {
-        ...data,
-        role: 'user', // принудительно, клиент не может выбрать роль
-      },
-    })
+  async register(data: Omit<RegisterDto, 'role'>): Promise<LoginResult> {
+      return this.request<LoginResult>('/api/auth/register', {
+        method: 'POST',
+        body: { ...data, role: 'user' },
+      }).then(this.applyAuth)
+    }
+
+  async login(data: LoginDto): Promise<LoginResult> {
+      return this.request<LoginResult>('/api/auth/login', {
+        method: 'POST',
+        body: data,
+      }).then(this.applyAuth)
   }
 
-  login(data: LoginDto): Promise<LoginResult> {
-    return this.request<LoginResult>('/api/auth/login', {
-      method: 'POST',
-      body: data,
-    })
-  }
+  async logout(): Promise<DetailResponse> {
+     try {
+       return await this.request<DetailResponse>('/api/auth/logout', { method: 'POST' })
+     } finally {
+       useAuthStore.getState().clearAuth()
+     }
+   }
+
+   /** Текущий пользователь. null — если не авторизован */
+   async session(): Promise<IUser | null> {
+     const data = await this.request<{ user: IUser | null }>('/api/auth/session')
+     const { setUser, setBootstrapping } = useAuthStore.getState()
+     setUser(data.user)
+     setBootstrapping(false)
+     return data.user
+   }
+
+   /** Кладёт пользователя в стор сразу после логина/регистрации */
+  private applyAuth = (result: LoginResult): LoginResult => {
+     const { setUser, setBootstrapping } = useAuthStore.getState()
+     setUser(result.user)
+     setBootstrapping(false)
+     return result
+   }
 
   refresh(): Promise<{ ok: true }> {
     return this.request<{ ok: true }>('/api/auth/refresh', { method: 'POST' })
-  }
-
-  logout(): Promise<DetailResponse> {
-    return this.request<DetailResponse>('/api/auth/logout', { method: 'POST' })
-  }
-
-  /** Текущий пользователь. null — если не авторизован */
-  async session(): Promise<IUser | null> {
-    const data = await this.request<{ user: IUser | null }>('/api/auth/session')
-    return data.user
   }
 
   me(): Promise<IUser> {
