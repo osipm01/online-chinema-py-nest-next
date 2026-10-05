@@ -3,7 +3,7 @@ import type {
   Category,
   CategoryWithCount,
   CategoryWithMedia,
-} from '@/types/CategoryTypes'
+} from '@/types/categoryTypes'
 
 
 export class CategoryService extends BaseApiService {
