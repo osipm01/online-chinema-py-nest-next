@@ -42,7 +42,7 @@ export default function ProfilePage() {
       /* ignore */
     } finally {
       clearAuth();
-      router.push('/login');
+      router.push('/auth');
     }
   };
 
