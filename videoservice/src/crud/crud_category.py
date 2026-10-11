@@ -13,7 +13,11 @@ from src.schemas.category import CategoryCreate
 
 class CRUDCategory(CRUDBase[Category, CategoryCreate]):
 
-    async def get_with_media(self, db: AsyncSession, category_id: int) -> Optional[Category]:
+    # ==================== CRUD / GET ====================
+
+    async def get_with_media(
+        self, db: AsyncSession, category_id: int
+    ) -> Optional[Category]:
         """Получение категории сразу со всеми привязанными медиафайлами"""
         try:
             result = await db.execute(
@@ -25,13 +29,20 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
             if category is None:
                 logger.warning(f"Категория с id={category_id} не найдена")
             else:
-                logger.debug(f"Категория id={category_id} получена с медиа ({len(category.media)} шт.)")
+                logger.debug(
+                    f"Категория id={category_id} получена с медиа "
+                    f"({len(category.media)} шт.)"
+                )
             return category
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении категории id={category_id} с медиа: {e}")
+            logger.exception(
+                f"Ошибка БД при получении категории id={category_id} с медиа: {e}"
+            )
             raise
 
-    async def get_by_name(self, db: AsyncSession, name: str) -> Optional[Category]:
+    async def get_by_name(
+        self, db: AsyncSession, name: str
+    ) -> Optional[Category]:
         """Поиск по уникальному имени"""
         try:
             result = await db.execute(
@@ -42,7 +53,9 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
                 logger.debug(f"Категория с именем '{name}' не найдена")
             return category
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при поиске категории по имени '{name}': {e}")
+            logger.exception(
+                f"Ошибка БД при поиске категории по имени '{name}': {e}"
+            )
             raise
 
     async def get_all(self, db: AsyncSession) -> Sequence[Category]:
@@ -75,11 +88,18 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
                 .limit(limit)
             )
             rows = result.all()
-            logger.debug(f"Получено категорий с медиа-счётчиком: {len(rows)} (skip={skip}, limit={limit})")
+            logger.debug(
+                f"Получено категорий с медиа-счётчиком: {len(rows)} "
+                f"(skip={skip}, limit={limit})"
+            )
             return rows
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении категорий с количеством медиа: {e}")
+            logger.exception(
+                f"Ошибка БД при получении категорий с количеством медиа: {e}"
+            )
             raise
+
+    # ==================== MEDIA LINKS ====================
 
     async def add_media(
         self,
@@ -87,7 +107,7 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
         category_id: int,
         media_id: int,
     ) -> None:
-        """Добавить медиа в категорию"""
+        """Добавить медиа в категорию (идемпотентно)"""
         try:
             await db.execute(
                 text(
@@ -98,12 +118,14 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
                 {"media_id": media_id, "category_id": category_id},
             )
             await db.commit()
-            logger.info(f"Медиа id={media_id} добавлено в категорию id={category_id}")
+            logger.info(
+                f"Медиа id={media_id} добавлено в категорию id={category_id}"
+            )
         except IntegrityError as e:
             await db.rollback()
             logger.error(
                 f"Нарушение целостности при добавлении медиа id={media_id} "
-                f"в категорию id={category_id}: {e}"
+                f"в категорию id={category_id} (неверный id?): {e}"
             )
             raise
         except SQLAlchemyError as e:
@@ -132,11 +154,13 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
             await db.commit()
             if result.rowcount == 0:
                 logger.warning(
-                    f"Связь медиа id={media_id} с категорией id={category_id} не найдена — "
-                    f"нечего удалять"
+                    f"Связь медиа id={media_id} с категорией id={category_id} "
+                    f"не найдена — нечего удалять"
                 )
             else:
-                logger.info(f"Медиа id={media_id} удалено из категории id={category_id}")
+                logger.info(
+                    f"Медиа id={media_id} удалено из категории id={category_id}"
+                )
         except SQLAlchemyError as e:
             await db.rollback()
             logger.exception(
@@ -162,7 +186,8 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
             )
             exists = result.scalar() is not None
             logger.debug(
-                f"Проверка связи медиа id={media_id} ↔ категория id={category_id}: {exists}"
+                f"Проверка связи медиа id={media_id} ↔ категория "
+                f"id={category_id}: {exists}"
             )
             return exists
         except SQLAlchemyError as e:
@@ -172,7 +197,9 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
             )
             raise
 
-    async def get_media_ids(self, db: AsyncSession, category_id: int) -> List[int]:
+    async def get_media_ids(
+        self, db: AsyncSession, category_id: int
+    ) -> List[int]:
         """Получить все media_id для категории"""
         try:
             result = await db.execute(
@@ -183,10 +210,70 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
                 {"category_id": category_id},
             )
             ids = [row[0] for row in result.all()]
-            logger.debug(f"Для категории id={category_id} найдено media_id: {len(ids)}")
+            logger.debug(
+                f"Для категории id={category_id} найдено media_id: {len(ids)}"
+            )
             return ids
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении media_id для категории id={category_id}: {e}")
+            logger.exception(
+                f"Ошибка БД при получении media_id для категории "
+                f"id={category_id}: {e}"
+            )
+            raise
+
+    # ==================== CASCADE DELETE ====================
+
+    async def cascade_delete_category(
+        self, db: AsyncSession, category_id: int
+    ) -> None:
+        """
+        Каскадное удаление категории:
+        1. Проверяет существование.
+        2. Удаляет связи в media_category.
+        3. Удаляет саму категорию.
+        """
+        try:
+            category = await self.get(db, category_id)
+            if category is None:
+                logger.warning(
+                    f"Каскадное удаление пропущено: категория id={category_id} "
+                    f"не найдена"
+                )
+                return
+
+            result = await db.execute(
+                text(
+                    "DELETE FROM media_category "
+                    "WHERE category_id = :category_id"
+                ),
+                {"category_id": category_id},
+            )
+            links_deleted = result.rowcount or 0
+            logger.debug(
+                f"Удалено связей media_category для категории id={category_id}: "
+                f"{links_deleted}"
+            )
+
+            await db.delete(category)
+            await db.commit()
+
+            logger.info(
+                f"Категория id={category_id} каскадно удалена "
+                f"(связей удалено: {links_deleted})"
+            )
+        except IntegrityError as e:
+            await db.rollback()
+            logger.error(
+                f"Нарушение целостности при каскадном удалении категории "
+                f"id={category_id}: {e}"
+            )
+            raise
+        except SQLAlchemyError as e:
+            await db.rollback()
+            logger.exception(
+                f"Ошибка БД при каскадном удалении категории "
+                f"id={category_id}: {e}"
+            )
             raise
 
 

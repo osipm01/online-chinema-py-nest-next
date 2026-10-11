@@ -1,26 +1,28 @@
-from typing import Sequence, Optional, List, Tuple
+from typing import Sequence, Optional, List
 
 from loguru import logger
-from sqlalchemy import select, func, or_, text
+from sqlalchemy import select, or_, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.crud.base import CRUDBase
-from src.model.model import Media, Season, Episode, Category
+from src.model.model import Media, Season, Episode
 from src.schemas.media import MediaCreate
 
 
 class CRUDMedia(CRUDBase[Media, MediaCreate]):
 
-    # ==================== MEDIA METHODS ====================
+    # ==================== MEDIA ====================
 
-    async def get_full_details(self, db: AsyncSession, media_id: int) -> Optional[Media]:
+    async def get_full_details(
+        self, db: AsyncSession, media_id: int
+    ) -> Optional[Media]:
         """
         Получить медиа со всеми вложенными зависимостями:
-        - Если это сериал: подгружаются сезоны и серии внутри каждого сезона.
-        - Если это фильм: подгружаются прямые серии.
-        - Также подгружаются категории.
+        - сериал: сезоны + эпизоды внутри сезонов;
+        - фильм: прямые эпизоды;
+        - категории.
         """
         try:
             result = await db.execute(
@@ -34,7 +36,9 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
             )
             media = result.scalars().first()
             if media is None:
-                logger.warning(f"Медиа с id={media_id} не найдено (full details)")
+                logger.warning(
+                    f"Медиа с id={media_id} не найдено (full details)"
+                )
             else:
                 logger.debug(
                     f"Медиа id={media_id} получено: "
@@ -44,7 +48,10 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 )
             return media
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении полных данных медиа id={media_id}: {e}")
+            logger.exception(
+                f"Ошибка БД при получении полных данных медиа "
+                f"id={media_id}: {e}"
+            )
             raise
 
     async def get_movies(
@@ -59,10 +66,15 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 .limit(limit)
             )
             movies = result.scalars().all()
-            logger.debug(f"Получено фильмов: {len(movies)} (skip={skip}, limit={limit})")
+            logger.debug(
+                f"Получено фильмов: {len(movies)} (skip={skip}, limit={limit})"
+            )
             return movies
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении фильмов (skip={skip}, limit={limit}): {e}")
+            logger.exception(
+                f"Ошибка БД при получении фильмов "
+                f"(skip={skip}, limit={limit}): {e}"
+            )
             raise
 
     async def get_tv_shows(
@@ -77,10 +89,15 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 .limit(limit)
             )
             shows = result.scalars().all()
-            logger.debug(f"Получено сериалов: {len(shows)} (skip={skip}, limit={limit})")
+            logger.debug(
+                f"Получено сериалов: {len(shows)} (skip={skip}, limit={limit})"
+            )
             return shows
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении сериалов (skip={skip}, limit={limit}): {e}")
+            logger.exception(
+                f"Ошибка БД при получении сериалов "
+                f"(skip={skip}, limit={limit}): {e}"
+            )
             raise
 
     async def get_by_category(
@@ -90,12 +107,12 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
         skip: int = 0,
         limit: int = 100,
     ) -> Sequence[Media]:
-        """Получить все медиа-ресурсы, принадлежащие определенной категории"""
+        """Получить все медиа, принадлежащие категории"""
         try:
             result = await db.execute(
                 select(self.model)
                 .join(self.model.categories)
-                .where(Category.id == category_id)
+                .where(self.model.categories.any(id=category_id))
                 .offset(skip)
                 .limit(limit)
             )
@@ -107,7 +124,8 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
             return media_list
         except SQLAlchemyError as e:
             logger.exception(
-                f"Ошибка БД при получении медиа для категории id={category_id}: {e}"
+                f"Ошибка БД при получении медиа для категории "
+                f"id={category_id}: {e}"
             )
             raise
 
@@ -138,10 +156,14 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
             )
             return media_list
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при поиске медиа по запросу '{query}': {e}")
+            logger.exception(
+                f"Ошибка БД при поиске медиа по запросу '{query}': {e}"
+            )
             raise
 
-    async def get_recent(self, db: AsyncSession, limit: int = 10) -> Sequence[Media]:
+    async def get_recent(
+        self, db: AsyncSession, limit: int = 10
+    ) -> Sequence[Media]:
         """Получить последние добавленные медиа"""
         try:
             result = await db.execute(
@@ -150,10 +172,14 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 .limit(limit)
             )
             media_list = result.scalars().all()
-            logger.debug(f"Получено последних медиа: {len(media_list)} (limit={limit})")
+            logger.debug(
+                f"Получено последних медиа: {len(media_list)} (limit={limit})"
+            )
             return media_list
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении последних медиа: {e}")
+            logger.exception(
+                f"Ошибка БД при получении последних медиа: {e}"
+            )
             raise
 
     async def get_media_with_categories(
@@ -168,11 +194,14 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
             )
             media = result.scalars().first()
             if media is None:
-                logger.warning(f"Медиа с id={media_id} не найдено (with categories)")
+                logger.warning(
+                    f"Медиа с id={media_id} не найдено (with categories)"
+                )
             return media
         except SQLAlchemyError as e:
             logger.exception(
-                f"Ошибка БД при получении медиа id={media_id} с категориями: {e}"
+                f"Ошибка БД при получении медиа id={media_id} "
+                f"с категориями: {e}"
             )
             raise
 
@@ -182,22 +211,27 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
         media_id: int,
         category_ids: List[int],
     ) -> Optional[Media]:
-        """Обновить категории для медиа"""
+        """
+        Полностью заменить набор категорий у медиа.
+
+        Семантически это операция над медиа («у этого медиа теперь
+        такие категории»), поэтому метод живёт здесь. За добавление/
+        удаление одной связи отвечает CRUDCategory.
+        """
         try:
             media = await self.get(db, media_id)
             if not media:
                 logger.warning(
-                    f"Невозможно обновить категории: медиа id={media_id} не найдено"
+                    f"Невозможно обновить категории: медиа id={media_id} "
+                    f"не найдено"
                 )
                 return None
 
-            # Удаляем старые связи
             await db.execute(
                 text("DELETE FROM media_category WHERE media_id = :media_id"),
                 {"media_id": media_id},
             )
 
-            # Добавляем новые
             for category_id in category_ids:
                 await db.execute(
                     text(
@@ -212,14 +246,13 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 f"Обновлены категории для медиа id={media_id}: "
                 f"установлено {len(category_ids)} связей"
             )
-
             return await self.get_media_with_categories(db, media_id)
 
         except IntegrityError as e:
             await db.rollback()
             logger.error(
-                f"Нарушение целостности при обновлении категорий медиа id={media_id} "
-                f"(category_ids={category_ids}): {e}"
+                f"Нарушение целостности при обновлении категорий медиа "
+                f"id={media_id} (category_ids={category_ids}): {e}"
             )
             raise
         except SQLAlchemyError as e:
@@ -229,7 +262,7 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
             )
             raise
 
-    # ==================== SEASON METHODS ====================
+    # ==================== SEASONS ====================
 
     async def get_seasons_by_media(
         self, db: AsyncSession, media_id: int
@@ -242,10 +275,14 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 .order_by(Season.season_number)
             )
             seasons = result.scalars().all()
-            logger.debug(f"Получено сезонов для медиа id={media_id}: {len(seasons)}")
+            logger.debug(
+                f"Получено сезонов для медиа id={media_id}: {len(seasons)}"
+            )
             return seasons
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении сезонов медиа id={media_id}: {e}")
+            logger.exception(
+                f"Ошибка БД при получении сезонов медиа id={media_id}: {e}"
+            )
             raise
 
     async def get_season_with_episodes(
@@ -266,11 +303,14 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 logger.warning(f"Сезон с id={season_id} не найден")
             else:
                 logger.debug(
-                    f"Сезон id={season_id} получен: эпизодов={len(season.episodes)}"
+                    f"Сезон id={season_id} получен: "
+                    f"эпизодов={len(season.episodes)}"
                 )
             return season
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении сезона id={season_id}: {e}")
+            logger.exception(
+                f"Ошибка БД при получении сезона id={season_id}: {e}"
+            )
             raise
 
     async def get_season_by_number(
@@ -297,7 +337,7 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
             )
             raise
 
-    # ==================== EPISODE METHODS ====================
+    # ==================== EPISODES ====================
 
     async def get_episodes_by_season(
         self, db: AsyncSession, season_id: int
@@ -310,10 +350,15 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 .order_by(Episode.id)
             )
             episodes = result.scalars().all()
-            logger.debug(f"Получено эпизодов сезона id={season_id}: {len(episodes)}")
+            logger.debug(
+                f"Получено эпизодов сезона id={season_id}: {len(episodes)}"
+            )
             return episodes
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении эпизодов сезона id={season_id}: {e}")
+            logger.exception(
+                f"Ошибка БД при получении эпизодов сезона "
+                f"id={season_id}: {e}"
+            )
             raise
 
     async def get_episodes_by_media(
@@ -327,11 +372,15 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 .order_by(Episode.id)
             )
             episodes = result.scalars().all()
-            logger.debug(f"Получено прямых эпизодов медиа id={media_id}: {len(episodes)}")
+            logger.debug(
+                f"Получено прямых эпизодов медиа id={media_id}: "
+                f"{len(episodes)}"
+            )
             return episodes
         except SQLAlchemyError as e:
             logger.exception(
-                f"Ошибка БД при получении прямых эпизодов медиа id={media_id}: {e}"
+                f"Ошибка БД при получении прямых эпизодов медиа "
+                f"id={media_id}: {e}"
             )
             raise
 
@@ -353,129 +402,8 @@ class CRUDMedia(CRUDBase[Media, MediaCreate]):
                 logger.warning(f"Эпизод с id={episode_id} не найден")
             return episode
         except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при получении эпизода id={episode_id}: {e}")
-            raise
-
-    # ==================== CATEGORY METHODS ====================
-
-    async def get_category_with_media(
-        self, db: AsyncSession, category_id: int
-    ) -> Optional[Category]:
-        """Получить категорию со всеми медиа-ресурсами"""
-        try:
-            result = await db.execute(
-                select(Category)
-                .where(Category.id == category_id)
-                .options(selectinload(Category.media))
-            )
-            category = result.scalars().first()
-            if category is None:
-                logger.warning(f"Категория с id={category_id} не найдена")
-            else:
-                logger.debug(
-                    f"Категория id={category_id} получена: медиа={len(category.media)}"
-                )
-            return category
-        except SQLAlchemyError as e:
             logger.exception(
-                f"Ошибка БД при получении категории id={category_id} с медиа: {e}"
-            )
-            raise
-
-    async def get_category_by_name(
-        self, db: AsyncSession, name: str
-    ) -> Optional[Category]:
-        """Найти категорию по имени"""
-        try:
-            result = await db.execute(
-                select(Category).where(Category.name == name)
-            )
-            category = result.scalars().first()
-            if category is None:
-                logger.debug(f"Категория с именем '{name}' не найдена")
-            return category
-        except SQLAlchemyError as e:
-            logger.exception(f"Ошибка БД при поиске категории '{name}': {e}")
-            raise
-
-    async def get_all_categories_with_media_count(
-        self, db: AsyncSession
-    ) -> Sequence[Tuple[Category, int]]:
-        """Получить все категории с количеством медиа"""
-        try:
-            result = await db.execute(
-                select(Category, func.count(Media.id))
-                .join(Category.media)
-                .group_by(Category.id)
-            )
-            rows = result.all()
-            logger.debug(f"Получено категорий со счётчиком медиа: {len(rows)}")
-            return rows
-        except SQLAlchemyError as e:
-            logger.exception(
-                f"Ошибка БД при получении категорий с количеством медиа: {e}"
-            )
-            raise
-
-    async def add_media_to_category(
-        self, db: AsyncSession, category_id: int, media_id: int
-    ) -> None:
-        """Добавить медиа в категорию"""
-        try:
-            await db.execute(
-                text(
-                    "INSERT INTO media_category (media_id, category_id) "
-                    "VALUES (:media_id, :category_id)"
-                ),
-                {"media_id": media_id, "category_id": category_id},
-            )
-            await db.commit()
-            logger.info(
-                f"Медиа id={media_id} добавлено в категорию id={category_id}"
-            )
-        except IntegrityError as e:
-            await db.rollback()
-            logger.error(
-                f"Нарушение целостности при добавлении медиа id={media_id} "
-                f"в категорию id={category_id} "
-                f"(возможно, связь уже существует или неверный id): {e}"
-            )
-            raise
-        except SQLAlchemyError as e:
-            await db.rollback()
-            logger.exception(
-                f"Ошибка БД при добавлении медиа id={media_id} "
-                f"в категорию id={category_id}: {e}"
-            )
-            raise
-
-    async def remove_media_from_category(
-        self, db: AsyncSession, category_id: int, media_id: int
-    ) -> None:
-        """Удалить медиа из категории"""
-        try:
-            result = await db.execute(
-                text(
-                    "DELETE FROM media_category "
-                    "WHERE media_id = :media_id AND category_id = :category_id"
-                ),
-                {"media_id": media_id, "category_id": category_id},
-            )
-            await db.commit()
-            if result.rowcount == 0:
-                logger.warning(
-                    f"Связь медиа id={media_id} с категорией id={category_id} "
-                    f"не найдена — нечего удалять"
-                )
-            else:
-                logger.info(
-                    f"Медиа id={media_id} удалено из категории id={category_id}"
-                )
-        except SQLAlchemyError as e:
-            await db.rollback()
-            logger.exception(
-                f"Ошибка БД при удалении медиа id={media_id} "
-                f"из категории id={category_id}: {e}"
+                f"Ошибка БД при получении эпизода id={episode_id}: {e}"
             )
             raise
 
