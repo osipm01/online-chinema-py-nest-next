@@ -1,6 +1,9 @@
 from typing import Sequence, Optional, Tuple, List
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from loguru import logger
 from sqlalchemy import select, func, text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.crud.base import CRUDBase
@@ -12,107 +15,179 @@ class CRUDCategory(CRUDBase[Category, CategoryCreate]):
 
     async def get_with_media(self, db: AsyncSession, category_id: int) -> Optional[Category]:
         """Получение категории сразу со всеми привязанными медиафайлами"""
-        result = await db.execute(
-            select(self.model)
-            .where(self.model.id == category_id)
-            .options(selectinload(self.model.media))  # Жадная загрузка связей Many-to-Many
-        )
-        return result.scalars().first()
+        try:
+            result = await db.execute(
+                select(self.model)
+                .where(self.model.id == category_id)
+                .options(selectinload(self.model.media))
+            )
+            category = result.scalars().first()
+            if category is None:
+                logger.warning(f"Категория с id={category_id} не найдена")
+            else:
+                logger.debug(f"Категория id={category_id} получена с медиа ({len(category.media)} шт.)")
+            return category
+        except SQLAlchemyError as e:
+            logger.exception(f"Ошибка БД при получении категории id={category_id} с медиа: {e}")
+            raise
 
     async def get_by_name(self, db: AsyncSession, name: str) -> Optional[Category]:
         """Поиск по уникальному имени"""
-        result = await db.execute(
-            select(self.model).where(self.model.name == name)
-        )
-        return result.scalars().first()
+        try:
+            result = await db.execute(
+                select(self.model).where(self.model.name == name)
+            )
+            category = result.scalars().first()
+            if category is None:
+                logger.debug(f"Категория с именем '{name}' не найдена")
+            return category
+        except SQLAlchemyError as e:
+            logger.exception(f"Ошибка БД при поиске категории по имени '{name}': {e}")
+            raise
 
     async def get_all(self, db: AsyncSession) -> Sequence[Category]:
         """Получение всех категорий"""
-        result = await db.execute(
-            select(self.model)
-            .order_by(self.model.name)  # Сортировка по имени
-        )
-        return result.scalars().all()
+        try:
+            result = await db.execute(
+                select(self.model).order_by(self.model.name)
+            )
+            categories = result.scalars().all()
+            logger.debug(f"Получено категорий: {len(categories)}")
+            return categories
+        except SQLAlchemyError as e:
+            logger.exception(f"Ошибка БД при получении списка категорий: {e}")
+            raise
 
     async def get_all_with_media_count(
         self,
         db: AsyncSession,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> Sequence[Tuple[Category, int]]:
         """Получение всех категорий с количеством медиа"""
-        result = await db.execute(
-            select(self.model, func.count(Media.id))
-            .outerjoin(self.model.media)  # LEFT JOIN чтобы получить категории без медиа
-            .group_by(self.model.id)
-            .order_by(self.model.name)
-            .offset(skip)
-            .limit(limit)
-        )
-        return result.all()
+        try:
+            result = await db.execute(
+                select(self.model, func.count(Media.id))
+                .outerjoin(self.model.media)
+                .group_by(self.model.id)
+                .order_by(self.model.name)
+                .offset(skip)
+                .limit(limit)
+            )
+            rows = result.all()
+            logger.debug(f"Получено категорий с медиа-счётчиком: {len(rows)} (skip={skip}, limit={limit})")
+            return rows
+        except SQLAlchemyError as e:
+            logger.exception(f"Ошибка БД при получении категорий с количеством медиа: {e}")
+            raise
 
     async def add_media(
         self,
         db: AsyncSession,
         category_id: int,
-        media_id: int
+        media_id: int,
     ) -> None:
         """Добавить медиа в категорию"""
-        await db.execute(
-            text(
-                "INSERT INTO media_category (media_id, category_id) "
-                "VALUES (:media_id, :category_id) "
-                "ON CONFLICT DO NOTHING"  # Игнорируем если связь уже существует
-            ),
-            {"media_id": media_id, "category_id": category_id}
-        )
-        await db.commit()
+        try:
+            await db.execute(
+                text(
+                    "INSERT INTO media_category (media_id, category_id) "
+                    "VALUES (:media_id, :category_id) "
+                    "ON CONFLICT DO NOTHING"
+                ),
+                {"media_id": media_id, "category_id": category_id},
+            )
+            await db.commit()
+            logger.info(f"Медиа id={media_id} добавлено в категорию id={category_id}")
+        except IntegrityError as e:
+            await db.rollback()
+            logger.error(
+                f"Нарушение целостности при добавлении медиа id={media_id} "
+                f"в категорию id={category_id}: {e}"
+            )
+            raise
+        except SQLAlchemyError as e:
+            await db.rollback()
+            logger.exception(
+                f"Ошибка БД при добавлении медиа id={media_id} "
+                f"в категорию id={category_id}: {e}"
+            )
+            raise
 
     async def remove_media(
         self,
         db: AsyncSession,
         category_id: int,
-        media_id: int
+        media_id: int,
     ) -> None:
         """Удалить медиа из категории"""
-        await db.execute(
-            text(
-                "DELETE FROM media_category "
-                "WHERE media_id = :media_id AND category_id = :category_id"
-            ),
-            {"media_id": media_id, "category_id": category_id}
-        )
-        await db.commit()
+        try:
+            result = await db.execute(
+                text(
+                    "DELETE FROM media_category "
+                    "WHERE media_id = :media_id AND category_id = :category_id"
+                ),
+                {"media_id": media_id, "category_id": category_id},
+            )
+            await db.commit()
+            if result.rowcount == 0:
+                logger.warning(
+                    f"Связь медиа id={media_id} с категорией id={category_id} не найдена — "
+                    f"нечего удалять"
+                )
+            else:
+                logger.info(f"Медиа id={media_id} удалено из категории id={category_id}")
+        except SQLAlchemyError as e:
+            await db.rollback()
+            logger.exception(
+                f"Ошибка БД при удалении медиа id={media_id} "
+                f"из категории id={category_id}: {e}"
+            )
+            raise
 
-    # src/crud/crud_category.py (исправление)
     async def check_media_exists(
-            self,
-            db: AsyncSession,
-            category_id: int,
-            media_id: int
+        self,
+        db: AsyncSession,
+        category_id: int,
+        media_id: int,
     ) -> bool:
         """Проверить, существует ли связь между категорией и медиа"""
-        from sqlalchemy import text
-
-        result = await db.execute(
-            text(
-                "SELECT 1 FROM media_category "  # Исправлено название таблицы
-                "WHERE media_id = :media_id AND category_id = :category_id"
-            ),
-            {"media_id": media_id, "category_id": category_id}
-        )
-        return result.scalar() is not None
+        try:
+            result = await db.execute(
+                text(
+                    "SELECT 1 FROM media_category "
+                    "WHERE media_id = :media_id AND category_id = :category_id"
+                ),
+                {"media_id": media_id, "category_id": category_id},
+            )
+            exists = result.scalar() is not None
+            logger.debug(
+                f"Проверка связи медиа id={media_id} ↔ категория id={category_id}: {exists}"
+            )
+            return exists
+        except SQLAlchemyError as e:
+            logger.exception(
+                f"Ошибка БД при проверке связи медиа id={media_id} "
+                f"и категории id={category_id}: {e}"
+            )
+            raise
 
     async def get_media_ids(self, db: AsyncSession, category_id: int) -> List[int]:
         """Получить все media_id для категории"""
-        result = await db.execute(
-            text(
-                "SELECT media_id FROM media_category "
-                "WHERE category_id = :category_id"
-            ),
-            {"category_id": category_id}
-        )
-        return [row[0] for row in result.all()]
+        try:
+            result = await db.execute(
+                text(
+                    "SELECT media_id FROM media_category "
+                    "WHERE category_id = :category_id"
+                ),
+                {"category_id": category_id},
+            )
+            ids = [row[0] for row in result.all()]
+            logger.debug(f"Для категории id={category_id} найдено media_id: {len(ids)}")
+            return ids
+        except SQLAlchemyError as e:
+            logger.exception(f"Ошибка БД при получении media_id для категории id={category_id}: {e}")
+            raise
 
 
 category_crud = CRUDCategory(Category)
