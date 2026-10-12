@@ -1,6 +1,4 @@
 # src/core/config.py
-from pydantic import PostgresDsn
-from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +12,8 @@ class Settings(BaseSettings):
     # для проверки автоизации URL сервера автоизации
     AUTH_CHECK_URL: str = "https://localhost:3100/api/users/check-auth-by-token"
     SECRET_JWT_KEY: str = "qwert"
+    COOKIE_NAME: str = "access_token"
+    ALGORITHM: str = "HS256"
 
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
